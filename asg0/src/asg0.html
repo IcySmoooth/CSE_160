@@ -1,0 +1,71 @@
+<!-- Michael Nieto -->
+<!-- mdnieto@ucsc.edu -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Draw a blue rectangle (canvas version)</title>
+  </head>
+
+  <body onload="main()">
+    <canvas id="cnv1" width="400" height="400">
+      Please use a browser that supports "canvas"
+    </canvas>
+
+    <br></br>
+
+    <!-- HTML Input element V1 -->
+    <label for="name">v1: </label>
+
+    <label for="name">x</label>
+    <input type="number" id="xin1" name="xin1" required minlength="4" maxlength="8" size="10" />
+
+    <label for="name">y</label>
+    <input type="number" id="yin1" name="yin1" required minlength="4" maxlength="8" size="10" />
+
+    <br></br>
+
+    <!-- HTML Input element V2 -->
+    <label for="name">v2: </label>
+
+    <label for="name">x</label>
+    <input type="number" id="xin2" name="xin2" required minlength="4" maxlength="8" size="10" />
+
+    <label for="name">y</label>
+    <input type="number" id="yin2" name="yin2" required minlength="4" maxlength="8" size="10" />
+
+    <br></br>
+
+    <!-- HTML Button element -->
+    <input type="button" value="Draw" onClick="handleDrawEvent()"></input>
+
+    <br></br>
+
+    <!-- HTML Select element -->
+    <label for="operation-select">Operation:</label>
+
+    <select name="operation" id="operation-select">
+      <option value="add">Add</option>
+      <option value="sub">Subtract</option>
+      <option value="mul">Multiply</option>
+      <option value="div">Divide</option>
+      <option value="ang">Angle Between</option>
+      <option value="are">Area</option>
+      <option value="mag">Magnitude</option>
+      <option value="nor">Normalize</option>
+    </select>
+
+    <!-- HTML Input element Scalar -->
+    <label for="name">Scalar: </label>
+    <input type="number" id="scalar" name="scalar" required minlength="4" maxlength="8" size="10" />
+
+    <br></br>
+
+    <!-- HTML Button element operation -->
+    <input type="button" value="Draw" onClick="handleDrawOperationEvent()"></input>
+
+    <script src="asg0.js"></script>
+    <script src="lib/cuon-matrix-cse160.js"></script>
+  </body>
+</html>

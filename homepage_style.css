@@ -1,0 +1,12 @@
+#Title {
+    width:800px;
+    height:auto;
+    font-size: 128;
+    margin-left:auto;
+    margin-right: auto;
+}
+
+#Element {
+    height: 150px;
+    background-color: #CCC;
+}
