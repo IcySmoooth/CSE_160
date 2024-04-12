@@ -39,7 +39,7 @@ let u_Size;
 let g_selectedType = POINT;
 let shapeColor = [1.0, 1.0, 1.0];
 let shapeSize = 5;
-let segmentCount = 5;
+let segmentCount = 3;
 let g_shapesList = [];
 
 function setupWebGL() {
@@ -115,9 +115,11 @@ function convertCoordinatesEventToGL(ev) {
     let y = ev.clientY // Y coordinate of a mouse pointer
     let rect = ev.target.getBoundingClientRect();
 
+    console.log("Before: " + [x, y]);
     x = ((x - rect.left) - canvas.width/2) / (canvas.width/2);
     y = (canvas.height/2 - (y - rect.top)) / (canvas.height/2);
 
+    console.log("After: " + [x, y]);
     return ([x, y]);
 }
 
@@ -133,9 +135,10 @@ function renderAllShapes() {
 function addActionsForHtmlUI() {
     // Button Events
     document.getElementById("clear").onclick = function() { g_shapesList = []; renderAllShapes(); };
-    document.getElementById("square").onclick = function() { g_selectedType = POINT; };
-    document.getElementById("triangle").onclick = function() { g_selectedType = TRIANGLE; };
-    document.getElementById("circle").onclick = function() { g_selectedType = CIRCLE; };
+    document.getElementById("square").onclick = function() { g_selectedType = POINT; sendTextToHTML("Drawing Mode: Squares", "drawingMode"); };
+    document.getElementById("triangle").onclick = function() { g_selectedType = TRIANGLE; sendTextToHTML("Drawing Mode: Triangles", "drawingMode"); };
+    document.getElementById("circle").onclick = function() { g_selectedType = CIRCLE; sendTextToHTML("Drawing Mode: Circles", "drawingMode"); };
+    document.getElementById("demo").addEventListener('mouseup', function(){ renderDemo() } )
 
     // Slider events
     document.getElementById("redSlider").addEventListener('mouseup', function(){ shapeColor[0] = this.value/100; });
@@ -144,6 +147,15 @@ function addActionsForHtmlUI() {
 
     document.getElementById("sizeSlider").addEventListener('mouseup', function(){ shapeSize = this.value; });
     document.getElementById("segmentSlider").addEventListener('mouseup', function(){ segmentCount = this.value; });
+}
+
+function sendTextToHTML(text, htmlID) {
+    var htmlElm = document.getElementById(htmlID);
+    if (!htmlID) {
+        console.log("Failed to get " + htmlID + " from HTML.");
+        return false;
+    }
+    htmlElm.innerHTML = text;
 }
 
 function main() {

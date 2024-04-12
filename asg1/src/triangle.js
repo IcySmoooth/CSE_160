@@ -17,7 +17,7 @@ class Triangle {
         gl.uniform1f(u_Size, size);
         // Draw
         var d = this.size/200.0;
-        drawTriangle( [xy[0], xy[1], xy[0] + d, xy[1], xy[0], xy[1] + d] );
+        drawTriangle( [xy[0], xy[1], xy[0] + d, xy[1], xy[0]+d/2, xy[1] + d] );
     }
 }
 
