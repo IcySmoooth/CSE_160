@@ -7,6 +7,7 @@
     <!-- Javascript references -->
     <script src="point.js"></script>
     <script src="triangle.js"></script>
+    <script src="circle.js"></script>
     <script src="asg1.js"></script>
 
     <!-- WebGL library references -->
@@ -30,6 +31,7 @@
 
     <button type="button" id="square">Squares</button>
     <button type="button" id="triangle">Triangles</button>
+    <button type="button" id="circle">Circles</button>
 
     <br></br>
 
@@ -47,10 +49,11 @@
     <br></br>
 
     <!-- Size and segment sliders -->
-    <div>
-        <label for="blueLabel">Shape Size: </label>
-        <input type="range" id="sizeSlider" name="sizeSlider" min="5" max="40", value="0"/>
-    </div>
+    <label for="blueLabel">Shape Size: </label>
+    <input type="range" id="sizeSlider" name="sizeSlider" min="5" max="40", value="0"/>
+
+    <label for="blueLabel">(Circles) Segment Count: </label>
+    <input type="range" id="segmentSlider" name="segmentSlider" min="5" max="15", value="0"/>
 </body>
 
 </html>

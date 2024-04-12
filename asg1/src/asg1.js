@@ -27,6 +27,7 @@ let FRAGMENT_SHADER = `
 // Constants
 const POINT = 0;
 const TRIANGLE = 1;
+const CIRCLE = 2;
 
 // Global variables
 let canvas;
@@ -38,6 +39,7 @@ let u_Size;
 let g_selectedType = POINT;
 let shapeColor = [1.0, 1.0, 1.0];
 let shapeSize = 5;
+let segmentCount = 5;
 let g_shapesList = [];
 
 function setupWebGL() {
@@ -92,8 +94,12 @@ function click(ev) {
     if (g_selectedType == POINT) {
         point = new Point();
     }
-    else {
+    else if (g_selectedType == TRIANGLE){
         point = new Triangle();
+    }
+    else {
+        point = new Circle();
+        point.segments = segmentCount;
     }
     
     point.position = [x, y];          // Store coordinates
@@ -129,6 +135,7 @@ function addActionsForHtmlUI() {
     document.getElementById("clear").onclick = function() { g_shapesList = []; renderAllShapes(); };
     document.getElementById("square").onclick = function() { g_selectedType = POINT; };
     document.getElementById("triangle").onclick = function() { g_selectedType = TRIANGLE; };
+    document.getElementById("circle").onclick = function() { g_selectedType = CIRCLE; };
 
     // Slider events
     document.getElementById("redSlider").addEventListener('mouseup', function(){ shapeColor[0] = this.value/100; });
@@ -136,6 +143,7 @@ function addActionsForHtmlUI() {
     document.getElementById("blueSlider").addEventListener('mouseup', function(){ shapeColor[2] = this.value/100; });
 
     document.getElementById("sizeSlider").addEventListener('mouseup', function(){ shapeSize = this.value; });
+    document.getElementById("segmentSlider").addEventListener('mouseup', function(){ segmentCount = this.value; });
 }
 
 function main() {
