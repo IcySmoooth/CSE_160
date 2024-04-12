@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Assignment 1: Painting</title>
+
+    <!-- Javascript references -->
+    <script src="point.js"></script>
+    <script src="triangle.js"></script>
+    <script src="asg1.js"></script>
+
+    <!-- WebGL library references -->
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+</head>
+
+<body onload="main()">
+    <!-- Create main canvas -->
+    <canvas id="webgl" width="400" height="400">Please use a browser that supports "canvas"</canvas>
+
+    <br></br>
+
+    <!-- Buttons -->
+    <button type="button" id="clear">Clear Canvas</button>
+
+    <br></br>
+
+    <p>Drawing Mode:</p>
+
+    <button type="button" id="square">Squares</button>
+    <button type="button" id="triangle">Triangles</button>
+
+    <br></br>
+
+    <!-- Color sliders -->
+    <p>Shape Color:</p>
+    <label for="redLabel">Red</label>
+    <input type="range" id="redSlider" name="redSlider" min="0" max="100", value="100"/>
+
+    <label for="greenLabel">Green</label>
+    <input type="range" id="greenSlider" name="greenSlider" min="0" max="100", value="100"/>
+
+    <label for="blueLabel">Blue</label>
+    <input type="range" id="blueSlider" name="blueSlider" min="0" max="100", value="100"/>
+
+    <br></br>
+
+    <!-- Size and segment sliders -->
+    <div>
+        <label for="blueLabel">Shape Size: </label>
+        <input type="range" id="sizeSlider" name="sizeSlider" min="5" max="40", value="0"/>
+    </div>
+</body>
+
+</html>
