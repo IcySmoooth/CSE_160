@@ -115,11 +115,11 @@ function convertCoordinatesEventToGL(ev) {
     let y = ev.clientY // Y coordinate of a mouse pointer
     let rect = ev.target.getBoundingClientRect();
 
-    console.log("Before: " + [x, y]);
+    console.log("Point coordinates: " + [x, y]);
+
     x = ((x - rect.left) - canvas.width/2) / (canvas.width/2);
     y = (canvas.height/2 - (y - rect.top)) / (canvas.height/2);
 
-    console.log("After: " + [x, y]);
     return ([x, y]);
 }
 
