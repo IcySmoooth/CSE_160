@@ -264,7 +264,46 @@ function addKirby() {
     g_shapesList.push(new Circle(
         convertCoordinatesToGL( [200, 240] ), pink, 48, 25));
 
-    // Kirby Face
+    // Kirby Left Eye
+    g_shapesList.push(new ExactSquare(
+        [190.0, 220.0,
+        190.0, 235.0,
+        180.0, 220.0,
+        180.0, 235.0], black, 5));
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [185, 222] ), black, 5, 25));
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [185, 237] ), black, 5, 25));
+    g_shapesList.push(new Point( convertCoordinatesToGL( [185, 222] ), white, 5 ));
+    
+    g_shapesList.push(new ExactSquare(
+        [210.0, 220.0,
+        210.0, 235.0,
+        220.0, 220.0,
+        220.0, 235.0], black, 5));
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [215, 222] ), black, 5, 25));
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [215, 237] ), black, 5, 25));
+    g_shapesList.push(new Point( convertCoordinatesToGL( [215, 222] ), white, 5 ));
+    
+    // Kirby mouth
+    g_shapesList.push(new ExactTriangle(
+        [185.0, 255.0,
+        215.0, 255.0,
+        200.0, 270.0], black, 5));
+    
+    // Kirby Blush
+    g_shapesList.push(new ExactSquare(
+        [160, 245,
+        175, 245,
+        160, 250,
+        175, 250], hot_pink, 5));
+    g_shapesList.push(new ExactSquare(
+        [240, 245,
+        225, 245,
+        240, 250,
+        225, 250], hot_pink, 5));
 }
 
 function renderDemo() {
@@ -275,6 +314,7 @@ function renderDemo() {
     white = [1.0, 1.0, 1.0, 1.0];
     black = [0.0, 0.0, 0.0, 1.0];
     pink = [0.969, 0.6, 0.925, 1.0];
+    hot_pink = [0.882, 0.400, 0.502];
     red = [0.949, 0.314, 0.267, 1.0];
     light_green = [0.459, 0.792, 0.427, 1.0];
     dark_green = [0.286, 0.655, 0.212, 1.0];
