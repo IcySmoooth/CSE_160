@@ -28,6 +28,7 @@ let FRAGMENT_SHADER = `
 const POINT = 0;
 const TRIANGLE = 1;
 const CIRCLE = 2;
+const RAINBOW = 3;
 
 // Global variables
 let canvas;
@@ -36,10 +37,11 @@ let a_Position;
 let u_Color;
 let u_Size;
 
+let demoActive = false;
 let g_selectedType = POINT;
 let shapeColor = [1.0, 1.0, 1.0];
 let shapeSize = 5;
-let segmentCount = 5;
+let segmentCount = 3;
 let g_shapesList = [];
 
 function setupWebGL() {
@@ -97,6 +99,9 @@ function click(ev) {
     else if (g_selectedType == TRIANGLE){
         point = new Triangle();
     }
+    else if (g_selectedType == RAINBOW) {
+        point = new Rainbow();
+    }
     else {
         point = new Circle();
         point.segments = segmentCount;
@@ -106,6 +111,7 @@ function click(ev) {
     point.color = shapeColor.slice(); // Store colors
     point.size = shapeSize;           // Store sizes
     g_shapesList.push(point);         // Store point
+    demoActive = false;
 
     renderAllShapes();
 }
@@ -114,6 +120,8 @@ function convertCoordinatesEventToGL(ev) {
     let x = ev.clientX; // X coordinate of a mouse pointer
     let y = ev.clientY // Y coordinate of a mouse pointer
     let rect = ev.target.getBoundingClientRect();
+
+    console.log("Point coordinates: " + [x, y]);
 
     x = ((x - rect.left) - canvas.width/2) / (canvas.width/2);
     y = (canvas.height/2 - (y - rect.top)) / (canvas.height/2);
@@ -130,12 +138,21 @@ function renderAllShapes() {
     }
 }
 
+function playSFX() {
+    if (!demoActive) {
+        document.getElementById("audio").play();
+        demoActive = true;
+    }
+}
+
 function addActionsForHtmlUI() {
     // Button Events
-    document.getElementById("clear").onclick = function() { g_shapesList = []; renderAllShapes(); };
-    document.getElementById("square").onclick = function() { g_selectedType = POINT; };
-    document.getElementById("triangle").onclick = function() { g_selectedType = TRIANGLE; };
-    document.getElementById("circle").onclick = function() { g_selectedType = CIRCLE; };
+    document.getElementById("clear").onclick = function() { g_shapesList = []; demoActive = false; renderAllShapes(); };
+    document.getElementById("square").onclick = function() { g_selectedType = POINT; sendTextToHTML("Drawing Mode: Squares", "drawingMode"); };
+    document.getElementById("triangle").onclick = function() { g_selectedType = TRIANGLE; sendTextToHTML("Drawing Mode: Triangles", "drawingMode"); };
+    document.getElementById("circle").onclick = function() { g_selectedType = CIRCLE; sendTextToHTML("Drawing Mode: Circles", "drawingMode"); };
+    document.getElementById("rainbow").onclick = function() { g_selectedType = RAINBOW; sendTextToHTML("Drawing Mode: Rainbow", "drawingMode"); };
+    document.getElementById("demo").addEventListener('mouseup', function(){ playSFX(); renderDemo() } )
 
     // Slider events
     document.getElementById("redSlider").addEventListener('mouseup', function(){ shapeColor[0] = this.value/100; });
@@ -144,6 +161,15 @@ function addActionsForHtmlUI() {
 
     document.getElementById("sizeSlider").addEventListener('mouseup', function(){ shapeSize = this.value; });
     document.getElementById("segmentSlider").addEventListener('mouseup', function(){ segmentCount = this.value; });
+}
+
+function sendTextToHTML(text, htmlID) {
+    var htmlElm = document.getElementById(htmlID);
+    if (!htmlID) {
+        console.log("Failed to get " + htmlID + " from HTML.");
+        return false;
+    }
+    htmlElm.innerHTML = text;
 }
 
 function main() {

@@ -1,10 +1,10 @@
 class Circle {
-    constructor() {
+    constructor(position=[0.0, 0.0, 0.0], color=[1.0, 1.0, 1.0, 1.0], size=5.0, segments=3) {
         this.type="circle";
-        this.position = [0.0, 0.0, 0.0];
-        this.color = [1.0, 1.0, 1.0, 1.0];
-        this.size = 5.0;
-        this.segments = 5;
+        this.position = position;
+        this.color = color;
+        this.size = size;
+        this.segments = segments;
     }
 
     render() {

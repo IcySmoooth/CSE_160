@@ -1,3 +1,6 @@
+<!-- Michael Nieto -->
+<!-- mdnieto@ucsc.edu -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,6 +11,9 @@
     <script src="point.js"></script>
     <script src="triangle.js"></script>
     <script src="circle.js"></script>
+    <script src="ExactTriangle.js"></script>
+    <script src="ExactSquare.js"></script>
+    <script src="RenderDemo.js"></script>
     <script src="asg1.js"></script>
 
     <!-- WebGL library references -->
@@ -24,14 +30,17 @@
 
     <!-- Buttons -->
     <button type="button" id="clear">Clear Canvas</button>
+    <button type="button" id="demo">Demo</button>
+    <audio id="audio" src="../sound/kirby_extra_life.mp3"></audio> <!-- Plays cute sound when pressing demo button -->
 
     <br></br>
 
-    <p>Drawing Mode:</p>
+    <p id="drawingMode">Drawing Mode: Squares</p>
 
     <button type="button" id="square">Squares</button>
     <button type="button" id="triangle">Triangles</button>
     <button type="button" id="circle">Circles</button>
+    <button type="button" id="rainbow">Rainbow</button>
 
     <br></br>
 
@@ -53,7 +62,7 @@
     <input type="range" id="sizeSlider" name="sizeSlider" min="5" max="40", value="0"/>
 
     <label for="blueLabel">(Circles) Segment Count: </label>
-    <input type="range" id="segmentSlider" name="segmentSlider" min="5" max="15", value="0"/>
+    <input type="range" id="segmentSlider" name="segmentSlider" min="3" max="15", value="0"/>
 </body>
 
 </html>
