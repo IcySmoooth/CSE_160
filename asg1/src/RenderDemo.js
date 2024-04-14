@@ -204,7 +204,67 @@ function addGrass() {
 }
 
 function addKirby() {
-    // Add outlines
+    // Right foot
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [225, 287] ), black, 15, 25)); // heel outline
+     g_shapesList.push(new ExactSquare(
+        [225.0, 272.0, 
+        250.0, 272.0,
+        225.0, 300.0,
+        250.0, 300.0], black, 5)); // middle outline
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [250, 287] ), black, 15, 25)); // toe outline
+    
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [225, 287] ), red, 13, 25)); // heel
+     g_shapesList.push(new ExactSquare(
+        [225.0, 274.0, 
+        250.0, 274.0,
+        225.0, 300.0,
+        250.0, 300.0], red, 5)); // middle
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [250, 287] ), red, 13, 25)); // toe
+    
+    // Left foot
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [175, 287] ), black, 15, 25)); // heel outline
+     g_shapesList.push(new ExactSquare(
+        [175.0, 272.0, 
+        150.0, 272.0,
+        175.0, 300.0,
+        150.0, 300.0], black, 5)); // middle outline
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [150, 287] ), black, 15, 25)); // toe outline
+    
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [175, 287] ), red, 13, 25)); // heel
+     g_shapesList.push(new ExactSquare(
+        [170.0, 274.0, 
+        150.0, 274.0,
+        170.0, 300.0,
+        150.0, 300.0], red, 5)); // middle
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [150, 287] ), red, 13, 25)); // toe
+    
+    // Left Hand
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [260, 220] ), black, 20, 25));
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [260, 220] ), pink, 18, 25));
+    
+    // Right Hand
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [140, 220] ), black, 20, 25));
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [140, 220] ), pink, 18, 25));
+
+    // Kirby Body
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [200, 240] ), black, 50, 25));
+    g_shapesList.push(new Circle(
+        convertCoordinatesToGL( [200, 240] ), pink, 48, 25));
+
+    // Kirby Face
 }
 
 function renderDemo() {
@@ -229,6 +289,7 @@ function renderDemo() {
     addPillarElements();
     addClouds();
     addGrass();
+    addKirby();
     
     // Render all shapes
     let len = g_shapesList.length;

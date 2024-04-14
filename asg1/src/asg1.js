@@ -28,6 +28,7 @@ let FRAGMENT_SHADER = `
 const POINT = 0;
 const TRIANGLE = 1;
 const CIRCLE = 2;
+const RAINBOW = 0;
 
 // Global variables
 let canvas;
@@ -97,6 +98,9 @@ function click(ev) {
     else if (g_selectedType == TRIANGLE){
         point = new Triangle();
     }
+    else if (g_selectedType == RAINBOW) {
+        point = new Rainbow();
+    }
     else {
         point = new Circle();
         point.segments = segmentCount;
@@ -138,6 +142,7 @@ function addActionsForHtmlUI() {
     document.getElementById("square").onclick = function() { g_selectedType = POINT; sendTextToHTML("Drawing Mode: Squares", "drawingMode"); };
     document.getElementById("triangle").onclick = function() { g_selectedType = TRIANGLE; sendTextToHTML("Drawing Mode: Triangles", "drawingMode"); };
     document.getElementById("circle").onclick = function() { g_selectedType = CIRCLE; sendTextToHTML("Drawing Mode: Circles", "drawingMode"); };
+    document.getElementById("rainbow").onclick = function() { g_selectedType = RAINBOW; sendTextToHTML("Drawing Mode: Rainbow", "drawingMode"); };
     document.getElementById("demo").addEventListener('mouseup', function(){ renderDemo() } )
 
     // Slider events
