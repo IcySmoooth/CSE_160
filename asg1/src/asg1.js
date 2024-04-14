@@ -28,7 +28,7 @@ let FRAGMENT_SHADER = `
 const POINT = 0;
 const TRIANGLE = 1;
 const CIRCLE = 2;
-const RAINBOW = 0;
+const RAINBOW = 3;
 
 // Global variables
 let canvas;
@@ -37,6 +37,7 @@ let a_Position;
 let u_Color;
 let u_Size;
 
+let demoActive = false;
 let g_selectedType = POINT;
 let shapeColor = [1.0, 1.0, 1.0];
 let shapeSize = 5;
@@ -110,6 +111,7 @@ function click(ev) {
     point.color = shapeColor.slice(); // Store colors
     point.size = shapeSize;           // Store sizes
     g_shapesList.push(point);         // Store point
+    demoActive = false;
 
     renderAllShapes();
 }
@@ -136,14 +138,21 @@ function renderAllShapes() {
     }
 }
 
+function playSFX() {
+    if (!demoActive) {
+        document.getElementById("audio").play();
+        demoActive = true;
+    }
+}
+
 function addActionsForHtmlUI() {
     // Button Events
-    document.getElementById("clear").onclick = function() { g_shapesList = []; renderAllShapes(); };
+    document.getElementById("clear").onclick = function() { g_shapesList = []; demoActive = false; renderAllShapes(); };
     document.getElementById("square").onclick = function() { g_selectedType = POINT; sendTextToHTML("Drawing Mode: Squares", "drawingMode"); };
     document.getElementById("triangle").onclick = function() { g_selectedType = TRIANGLE; sendTextToHTML("Drawing Mode: Triangles", "drawingMode"); };
     document.getElementById("circle").onclick = function() { g_selectedType = CIRCLE; sendTextToHTML("Drawing Mode: Circles", "drawingMode"); };
     document.getElementById("rainbow").onclick = function() { g_selectedType = RAINBOW; sendTextToHTML("Drawing Mode: Rainbow", "drawingMode"); };
-    document.getElementById("demo").addEventListener('mouseup', function(){ renderDemo() } )
+    document.getElementById("demo").addEventListener('mouseup', function(){ playSFX(); renderDemo() } )
 
     // Slider events
     document.getElementById("redSlider").addEventListener('mouseup', function(){ shapeColor[0] = this.value/100; });
