@@ -11,6 +11,7 @@
     <script src="point.js"></script>
     <script src="triangle.js"></script>
     <script src="circle.js"></script>
+    <script src="Rainbow.js"></script>
     <script src="ExactTriangle.js"></script>
     <script src="ExactSquare.js"></script>
     <script src="RenderDemo.js"></script>
@@ -25,6 +26,9 @@
 <body onload="main()">
     <!-- Create main canvas -->
     <canvas id="webgl" width="400" height="400">Please use a browser that supports "canvas"</canvas>
+
+    <!-- Reference image -->
+    <img src="../img/kirby_ref.png" id="demoReference" alt="Reference of demo">
 
     <br></br>
 
@@ -58,11 +62,27 @@
     <br></br>
 
     <!-- Size and segment sliders -->
-    <label for="blueLabel">Shape Size: </label>
+    <label for="sizeLabel">Shape Size: </label>
     <input type="range" id="sizeSlider" name="sizeSlider" min="5" max="40", value="0"/>
 
-    <label for="blueLabel">(Circles) Segment Count: </label>
+    <label for="segmentLabel">(Circles) Segment Count: </label>
     <input type="range" id="segmentSlider" name="segmentSlider" min="3" max="15", value="0"/>
+
+    <br></br>
+
+    <label for="frequencyLabel">(Rainbow) Color Frequency: </label>
+    <input type="range" id="frequencySlider" name="frequencySlider" min="1" max="50", value="0"/>
+
+    <br></br>
+    <br></br>
+
+    <!-- Grader Notes -->
+    <label>Grader Notes:</label> <br></br>
+    <label>Upon pressing the "Demo" button, a picture will be drawn to the canvas and it's accompanying reference image will be displayed besides it.</label>
+
+    <br></br>
+
+    <label>The rainbow brush draws points on the canvas and changes color every few squares drawn. The Color Frequency slider sets how many points in the current color will be rendered before switching to the next color.</label>
 </body>
 
 </html>

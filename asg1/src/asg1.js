@@ -38,11 +38,30 @@ let u_Color;
 let u_Size;
 
 let demoActive = false;
+let demoReference;
 let g_selectedType = POINT;
+let maxColorFrequency = 1;
+let currentColorFrequency = 0;
+let rainbowColorIndex = 0;
 let shapeColor = [1.0, 1.0, 1.0];
 let shapeSize = 5;
 let segmentCount = 3;
 let g_shapesList = [];
+
+let rainbowColorArray = [
+    [1.0, 0.0, 0.0, 1.0],
+    [1.0, 0.5, 0.0, 1.0],
+    [1.0, 1.0, 0.0, 1.0],
+    [0.5, 1.0, 0.0, 1.0],
+    [0.0, 1.0, 0.0, 1.0],
+    [0.0, 1.0, 0.5, 1.0],
+    [0.0, 1.0, 1.0, 1.0],
+    [0.0, 0.5, 1.0, 1.0],
+    [0.0, 0.0, 1.0, 1.0],
+    [0.5, 0.0, 1.0, 1.0],
+    [1.0, 0.0, 1.0, 1.0],
+    [1.0, 0.0, 0.5, 1.0]
+];
 
 function setupWebGL() {
     // Set up canvas reference 
@@ -89,15 +108,17 @@ function connectVariablesToGLSL() {
 function click(ev) {
     // Convert event click into WebGL Coordinates
     let [x, y] = convertCoordinatesEventToGL(ev);
-    
+
     //let point = new Point();
     let point;
 
     if (g_selectedType == POINT) {
         point = new Point();
+        point.color = shapeColor.slice(); // Store colors
     }
     else if (g_selectedType == TRIANGLE){
         point = new Triangle();
+        point.color = shapeColor.slice(); // Store colors
     }
     else if (g_selectedType == RAINBOW) {
         point = new Rainbow();
@@ -105,10 +126,10 @@ function click(ev) {
     else {
         point = new Circle();
         point.segments = segmentCount;
+        point.color = shapeColor.slice(); // Store colors
     }
     
     point.position = [x, y];          // Store coordinates
-    point.color = shapeColor.slice(); // Store colors
     point.size = shapeSize;           // Store sizes
     g_shapesList.push(point);         // Store point
     demoActive = false;
@@ -120,8 +141,6 @@ function convertCoordinatesEventToGL(ev) {
     let x = ev.clientX; // X coordinate of a mouse pointer
     let y = ev.clientY // Y coordinate of a mouse pointer
     let rect = ev.target.getBoundingClientRect();
-
-    console.log("Point coordinates: " + [x, y]);
 
     x = ((x - rect.left) - canvas.width/2) / (canvas.width/2);
     y = (canvas.height/2 - (y - rect.top)) / (canvas.height/2);
@@ -147,12 +166,12 @@ function playSFX() {
 
 function addActionsForHtmlUI() {
     // Button Events
-    document.getElementById("clear").onclick = function() { g_shapesList = []; demoActive = false; renderAllShapes(); };
+    document.getElementById("clear").onclick = function() { g_shapesList = []; demoActive = false; rainbowColorIndex = 0; currentColorFrequency=0; demoReference.style.display = "none"; renderAllShapes(); };
     document.getElementById("square").onclick = function() { g_selectedType = POINT; sendTextToHTML("Drawing Mode: Squares", "drawingMode"); };
     document.getElementById("triangle").onclick = function() { g_selectedType = TRIANGLE; sendTextToHTML("Drawing Mode: Triangles", "drawingMode"); };
     document.getElementById("circle").onclick = function() { g_selectedType = CIRCLE; sendTextToHTML("Drawing Mode: Circles", "drawingMode"); };
-    document.getElementById("rainbow").onclick = function() { g_selectedType = RAINBOW; sendTextToHTML("Drawing Mode: Rainbow", "drawingMode"); };
-    document.getElementById("demo").addEventListener('mouseup', function(){ playSFX(); renderDemo() } )
+    document.getElementById("rainbow").onclick = function() { g_selectedType = RAINBOW; rainbowColorIndex = 0; currentColorFrequency=0; sendTextToHTML("Drawing Mode: Rainbow", "drawingMode"); };
+    document.getElementById("demo").addEventListener('mouseup', function(){ playSFX(); demoReference.style.display = "initial"; renderDemo() } )
 
     // Slider events
     document.getElementById("redSlider").addEventListener('mouseup', function(){ shapeColor[0] = this.value/100; });
@@ -161,6 +180,7 @@ function addActionsForHtmlUI() {
 
     document.getElementById("sizeSlider").addEventListener('mouseup', function(){ shapeSize = this.value; });
     document.getElementById("segmentSlider").addEventListener('mouseup', function(){ segmentCount = this.value; });
+    document.getElementById("frequencySlider").addEventListener('mouseup', function(){ rainbowColorIndex=0; currentColorFrequency=0; maxColorFrequency=this.value; console.log("Frequency: " + this.value); });
 }
 
 function sendTextToHTML(text, htmlID) {
@@ -173,6 +193,9 @@ function sendTextToHTML(text, htmlID) {
 }
 
 function main() {
+    demoReference = document.getElementById("demoReference");
+    demoReference.style.display = "none"; // Hide reference image
+
     setupWebGL();
     connectVariablesToGLSL();
     addActionsForHtmlUI();
