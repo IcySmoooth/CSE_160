@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {OBJLoader} from 'obj';
 
 function main() {
     const canvas = document.querySelector('#c');
@@ -31,6 +32,12 @@ function main() {
     const loader = new THREE.TextureLoader();
     const texture = loader.load( '../img/wall.jpg' );
     texture.colorSpace = THREE.SRGBColorSpace;
+
+    // load models
+    const objLoader = new OBJLoader();
+    objLoader.load('../models/PenguinBaseMesh.obj', (root) => {
+        scene.add(root);
+      });
 
     // Create a cube
     const boxWidth = 1;
