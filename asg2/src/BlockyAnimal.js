@@ -1,0 +1,199 @@
+var VSHADER_SOURCE = `
+    attribute vec4 a_Position;
+    uniform mat4 u_ModelMatrix;
+    uniform mat4 u_GlobalRotateMatrix;
+    void main(){
+        gl_Position = u_GlobalRotateMatrix * u_ModelMatrix * a_Position;
+    }`;
+
+// Attribute variables used for getting data
+
+let FSHADER_SOURCE = `
+    precision mediump float;
+    uniform vec4 u_FragColor;
+    void main(){
+        gl_FragColor = u_FragColor;
+    }`;
+
+// Constants
+const POINT = 0;
+const TRIANGLE = 1;
+const CIRCLE = 2;
+
+// Global variables
+let canvas;
+let gl;
+let a_Position;
+let u_FragColor;
+let u_Size;
+let u_ModelMatrix;
+let u_GlobalRotateMatrix;
+
+let g_selectedType = POINT;
+let shapeColor = [1.0, 1.0, 1.0, 1.0];
+let shapeSize = 5;
+let g_yellowAnimation=false;
+let g_magentaAngle = 0;
+let g_yellowAngle = 0;
+let g_globalAngle = 0;
+
+function setupWebGL() {
+    // Set up canvas reference 
+    canvas = document.getElementById("webgl");
+
+    // Initialize WebGL context
+    gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
+    if (!gl) {
+        console.log("Failed to get WebGL context.");
+        return;
+    }
+
+    gl.enable(gl.DEPTH_TEST);
+}
+
+function connectVariablesToGLSL() {
+    // Compile and initialize shaders
+    if (!initShaders(gl, VSHADER_SOURCE, FSHADER_SOURCE)) {
+        console.log("Failed to load/compile shaders.");
+        return;
+    }
+
+    // Get the pointer location of a_Position
+    a_Position = gl.getAttribLocation(gl.program, "a_Position");
+    if (a_Position < 0) {
+        console.log("Failed to get storage location of a_Position.");
+        return;
+    }
+
+    // Get pointer location of u_FragColor
+    u_FragColor = gl.getUniformLocation(gl.program, "u_FragColor");
+    if (!u_FragColor) {
+        console.log("Failed to get storage location of u_FragColor.");
+        return;
+    }
+
+    // Get pointer location of u_ModelMatrix
+    u_ModelMatrix = gl.getUniformLocation(gl.program, "u_ModelMatrix");
+    if (!u_ModelMatrix) {
+        console.log("Failed to get storage location of u_ModelMatrix.");
+        return;
+    }
+
+    // Get pointer location of u_GlobalRotateMatrix
+    u_GlobalRotateMatrix = gl.getUniformLocation(gl.program, "u_GlobalRotateMatrix");
+    if (!u_GlobalRotateMatrix) {
+        console.log("Failed to get storage location of u_GlobalRotateMatrix.");
+        return;
+    }
+
+    // Intial value for matrix identity
+    var identityM = new Matrix4();
+    gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
+}
+
+function convertCoordinatesEventToGL(ev) {
+    let x = ev.clientX; // X coordinate of a mouse pointer
+    let y = ev.clientY // Y coordinate of a mouse pointer
+    let rect = ev.target.getBoundingClientRect();
+
+    x = ((x - rect.left) - canvas.width/2) / (canvas.width/2);
+    y = (canvas.height/2 - (y - rect.top)) / (canvas.height/2);
+
+    return ([x, y]);
+}
+
+function updateAnimationAngles() {
+    if (g_yellowAnimation) {
+        g_yellowAngle = (45*Math.sin(g_seconds));
+    }
+}
+
+function renderAllShapes() {
+    // Check time at start of function
+    var startTime = performance.now()
+
+    var globalRotMat = new Matrix4().rotate(g_globalAngle, 0, 1, 0);
+    gl.uniformMatrix4fv(u_GlobalRotateMatrix, false, globalRotMat.elements);
+
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT); // Clear canvas
+
+    // Draw a cube
+    var body = new Cube();
+    body.color = [1, 0, 0, 1];
+    body.matrix.translate(-.25, -.75, 0);
+    body.matrix.rotate(-5, 1, 0, 0);
+    body.matrix.scale(.5, .3, .5);
+    body.render();
+
+    // Draw a left arm
+    var leftArm = new Cube();
+    leftArm.color = [1, 1, 0, 1];
+    leftArm.matrix.setTranslate(0, -.5, 0);
+    leftArm.matrix.rotate(-5, 1, 0, 0);
+
+    leftArm.matrix.rotate(-g_yellowAngle, 0, 0, 1); // Rotation for the bone
+
+    var yellowCoordinatesMat = new Matrix4(leftArm.matrix);
+    leftArm.matrix.scale(0.25, 0.7, 0.5);
+    leftArm.matrix.translate(-.5, 0, 0);
+    leftArm.render();
+
+    // Test box
+    var box = new Cube();
+    box.color = [1, 0, 1, 1];
+    box.matrix = yellowCoordinatesMat;
+    box.matrix.translate(0, .65, 0);
+    box.matrix.rotate(g_magentaAngle, 0, 0, 1);
+    box.matrix.scale(.3, .3, .3);
+    box.matrix.translate(-.5, 0, -.001);
+    box.render();
+
+    // Check the timer at the end of the function
+    var duration = performance.now() - startTime;
+    sendTextToHTML(" ms: " + Math.floor(duration) + " fps: " + Math.floor(10000/duration), "performance");
+}
+
+function addActionsForHtmlUI() {
+    // Button Events
+    document.getElementById("animationYellowOnButton").onclick = function() {g_yellowAnimation = false;};
+    document.getElementById("animationYellowOffButton").onclick = function() {g_yellowAnimation = true;};
+
+    // Slider Events
+    document.getElementById("magentaSlide").addEventListener('mousemove', function(){ g_magentaAngle = this.value; renderAllShapes(); });
+    document.getElementById("yellowSlide").addEventListener('mousemove', function(){ g_yellowAngle = this.value; renderAllShapes(); });
+    document.getElementById("angleSlide").addEventListener('mousemove', function(){ g_globalAngle = this.value; renderAllShapes(); });
+}
+
+function sendTextToHTML(text, htmlID) {
+    var htmlElm = document.getElementById(htmlID);
+    if (!htmlID) {
+        console.log("Failed to get " + htmlID + " from HTML.");
+        return false;
+    }
+    htmlElm.innerHTML = text;
+}
+
+function main() {
+    setupWebGL();
+    connectVariablesToGLSL();
+    addActionsForHtmlUI();
+    //canvas.onmousedown = click; // Register function to be called on mouse click
+    //canvas.onmousemove = function(ev) { if (ev.buttons == 1) { click(ev) } };
+
+    gl.clearColor(0.0, 0.0, 0.0, 1.0); // Specify color for clearing the canvas
+    //gl.clear(gl.COLOR_BUFFER_BIT); // Clear canvas
+    requestAnimationFrame(tick);
+}
+
+var g_startTime = performance.now()/1000.0;
+var g_seconds = performance.now()/1000.0-g_startTime;
+
+function tick() {
+    g_seconds = performance.now()/1000.0-g_startTime;
+    updateAnimationAngles();
+    renderAllShapes();
+
+    // Tell browser to update again when it has the chance
+    requestAnimationFrame(tick);
+}
