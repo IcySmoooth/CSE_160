@@ -32,10 +32,21 @@ let u_GlobalRotateMatrix;
 let g_selectedType = POINT;
 let shapeColor = [1.0, 1.0, 1.0, 1.0];
 let shapeSize = 5;
-let g_yellowAnimation=false;
-let g_magentaAngle = 0;
-let g_yellowAngle = 0;
+
+// Animation variables
+let g_swimAnimation=false;
+let g_headPosition = 0;
+let g_headAngle = 0;
+let g_body1Angle = 0;
+let g_body2Angle = 0;
+let g_body3Angle = 0;
+let g_finAngle = 0;
+
 let g_globalAngle = 0;
+
+// User Mouse controls
+let isRotatingCamera = false;
+let prevMousePos = [ 0.0, 0.0 ];
 
 function setupWebGL() {
     // Set up canvas reference 
@@ -91,6 +102,45 @@ function connectVariablesToGLSL() {
     gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
 }
 
+function addActionsForHtmlUI() {
+    // Button Events
+    document.getElementById("animationYellowOnButton").onclick = function() {g_swimAnimation = true;};
+    document.getElementById("animationYellowOffButton").onclick = function() {g_swimAnimation = false;};
+
+    // Slider Events
+    document.getElementById("headSlide").addEventListener('mousemove', function(){ g_headAngle = this.value; renderAllShapes(); });
+    document.getElementById("body1Slide").addEventListener('mousemove', function(){ g_body1Angle = this.value; renderAllShapes(); });
+    document.getElementById("body2Slide").addEventListener('mousemove', function(){ g_body2Angle = this.value; renderAllShapes(); });
+    document.getElementById("body3Slide").addEventListener('mousemove', function(){ g_body3Angle = this.value; renderAllShapes(); });
+    document.getElementById("angleSlide").addEventListener('mousemove', function(){ g_globalAngle = this.value; renderAllShapes(); });
+}
+
+function sendTextToHTML(text, htmlID) {
+    var htmlElm = document.getElementById(htmlID);
+    if (!htmlID) {
+        console.log("Failed to get " + htmlID + " from HTML.");
+        return false;
+    }
+    htmlElm.innerHTML = text;
+}
+
+function onClick(ev) {
+    isRotatingCamera = true;
+    prevMousePos = convertCoordinatesEventToGL(ev);
+}
+
+function updateCamera(new_mouse_pos) {
+    if (new_mouse_pos[0] > prevMousePos[0]) {
+        g_globalAngle += 1;
+    }
+
+    else if (new_mouse_pos[0] < prevMousePos[0]) {
+        g_globalAngle -= 1;
+    }
+
+    prevMousePos = new_mouse_pos;
+}
+
 function convertCoordinatesEventToGL(ev) {
     let x = ev.clientX; // X coordinate of a mouse pointer
     let y = ev.clientY // Y coordinate of a mouse pointer
@@ -103,8 +153,16 @@ function convertCoordinatesEventToGL(ev) {
 }
 
 function updateAnimationAngles() {
-    if (g_yellowAnimation) {
-        g_yellowAngle = (45*Math.sin(g_seconds));
+    if (g_swimAnimation) {
+        g_headPosition = (.3*Math.sin(g_seconds));
+        g_headAngle = (30*Math.sin(g_seconds));
+
+        var delayFactor = 0.5;
+        g_body1Angle = (10*Math.cos(g_seconds - delayFactor));
+        g_body2Angle = (10*Math.cos(g_seconds - delayFactor*2));
+        g_body3Angle = (10*Math.cos(g_seconds - delayFactor*3));
+
+        g_finAngle = (10*Math.cos(g_seconds - delayFactor*2));
     }
 }
 
@@ -118,68 +176,95 @@ function renderAllShapes() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.clear(gl.COLOR_BUFFER_BIT); // Clear canvas
 
-    // Draw a cube
-    var body = new Cube();
-    body.color = [1, 0, 0, 1];
-    body.matrix.translate(-.25, -.75, 0);
-    body.matrix.rotate(-5, 1, 0, 0);
-    body.matrix.scale(.5, .3, .5);
-    body.render();
+    // Head
+    var head = new Cube();
+    head.color = [1, 1, 0, 1];
+    head.matrix.translate(-.5, -.2, g_headPosition);
+    head.matrix.rotate(g_headAngle, 0, 1, 0);
+    head.matrix.scale(.2, .2, .2);
+    var headCoordMat = new Matrix4(head.matrix);
+    head.render();
 
-    // Draw a left arm
-    var leftArm = new Cube();
-    leftArm.color = [1, 1, 0, 1];
-    leftArm.matrix.setTranslate(0, -.5, 0);
-    leftArm.matrix.rotate(-5, 1, 0, 0);
+    // Right eye
+    var rEye = new Cube();
+    rEye.color = [0, 0, 0, 1];
+    rEye.matrix = new Matrix4(headCoordMat);
+    rEye.matrix.translate(0, .5, -.05);
+    //lEye.matrix.rotate(g_headAngle, 0, 1, 0);
+    rEye.matrix.scale(.2, .2, .05);
+    rEye.render();
 
-    leftArm.matrix.rotate(-g_yellowAngle, 0, 0, 1); // Rotation for the bone
+    // Left eye
+    var lEye = new Cube();
+    lEye.color = [0, 0, 0, 1];
+    lEye.matrix = new Matrix4(headCoordMat);
+    lEye.matrix.translate(0, .5, 1.03);
+    //lEye.matrix.rotate(g_headAngle, 0, 1, 0);
+    lEye.matrix.scale(.2, .2, .05);
+    lEye.render();
 
-    var yellowCoordinatesMat = new Matrix4(leftArm.matrix);
-    leftArm.matrix.scale(0.25, 0.7, 0.5);
-    leftArm.matrix.translate(-.5, 0, 0);
-    leftArm.render();
+    // Body Segment 1
+    var body1 = new Cube();
+    body1.color = [1, 0, 0, 1];
+    body1.matrix = headCoordMat;
+    body1.matrix.translate(1, -.45, -.165);
+    body1.matrix.rotate(g_body1Angle, 0, 1, 0);
+    body1.matrix.scale(2, 2, 1.3);
+    var body1CoordMat = new Matrix4(body1.matrix);
+    body1.render();
 
-    // Test box
-    var box = new Cube();
-    box.color = [1, 0, 1, 1];
-    box.matrix = yellowCoordinatesMat;
-    box.matrix.translate(0, .65, 0);
-    box.matrix.rotate(g_magentaAngle, 0, 0, 1);
-    box.matrix.scale(.3, .3, .3);
-    box.matrix.translate(-.5, 0, -.001);
-    box.render();
+    // Body Segment 2
+    var body2 = new Cube();
+    body2.color = [1, .1, .1, 1];
+    body2.matrix = body1CoordMat;
+    body2.matrix.translate(0.99, 0.1, .1);
+    body2.matrix.rotate(g_body2Angle, 0, 1, 0);
+    body2.matrix.scale(.7, .8, .8);
+    var body2CoordMat = new Matrix4(body2.matrix);
+    body2.render();
+
+    // Body Segment 3
+    var body3 = new Cube();
+    body3.color = [1, .2, .2, 1];
+    body3.matrix = body2CoordMat;
+    body3.matrix.translate(0.99, 0.1, .1);
+    body3.matrix.rotate(g_body3Angle, 0, 1, 0);
+    body3.matrix.scale(.7, .8, .8);
+    var body3CoordMat = new Matrix4(body3.matrix);
+    body3.render();
+
+    // Left fin
+    var lFin = new Cube();
+    lFin.color = [1, 1, 0, 1];
+    lFin.matrix = new Matrix4(body1CoordMat);
+    lFin.matrix.translate(-1, 0, -.3);
+    lFin.matrix.rotate(-15, 0, 0, 1);
+    lFin.matrix.scale(.6, .4, .2);
+    lFin.matrix.rotate(g_finAngle, 0, 1, 0);
+    lFin.render();
+
+    // Right fin
+    var rFin = new Cube();
+    rFin.color = [1, 1, 0, 1];
+    rFin.matrix = new Matrix4(body1CoordMat);
+    rFin.matrix.translate(-1, 0, 1.1);
+    rFin.matrix.rotate(-15, 0, 0, 1);
+    rFin.matrix.scale(.6, .4, .2);
+    rFin.matrix.rotate(g_finAngle, 0, 1, 0);
+    rFin.render();
 
     // Check the timer at the end of the function
     var duration = performance.now() - startTime;
-    sendTextToHTML(" ms: " + Math.floor(duration) + " fps: " + Math.floor(10000/duration), "performance");
-}
-
-function addActionsForHtmlUI() {
-    // Button Events
-    document.getElementById("animationYellowOnButton").onclick = function() {g_yellowAnimation = false;};
-    document.getElementById("animationYellowOffButton").onclick = function() {g_yellowAnimation = true;};
-
-    // Slider Events
-    document.getElementById("magentaSlide").addEventListener('mousemove', function(){ g_magentaAngle = this.value; renderAllShapes(); });
-    document.getElementById("yellowSlide").addEventListener('mousemove', function(){ g_yellowAngle = this.value; renderAllShapes(); });
-    document.getElementById("angleSlide").addEventListener('mousemove', function(){ g_globalAngle = this.value; renderAllShapes(); });
-}
-
-function sendTextToHTML(text, htmlID) {
-    var htmlElm = document.getElementById(htmlID);
-    if (!htmlID) {
-        console.log("Failed to get " + htmlID + " from HTML.");
-        return false;
-    }
-    htmlElm.innerHTML = text;
+    sendTextToHTML(" ms: " + Math.floor(duration) + " fps: " + Math.floor(1000/duration), "performance");
 }
 
 function main() {
     setupWebGL();
     connectVariablesToGLSL();
     addActionsForHtmlUI();
-    //canvas.onmousedown = click; // Register function to be called on mouse click
-    //canvas.onmousemove = function(ev) { if (ev.buttons == 1) { click(ev) } };
+    canvas.onmousedown = onClick; // Register function to be called on mouse click
+    canvas.onmouseup = function(ev) { isRotatingCamera = false; };
+    canvas.onmousemove = function(ev) { if (ev.buttons == 1) { updateCamera(convertCoordinatesEventToGL(ev)); } };
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0); // Specify color for clearing the canvas
     //gl.clear(gl.COLOR_BUFFER_BIT); // Clear canvas

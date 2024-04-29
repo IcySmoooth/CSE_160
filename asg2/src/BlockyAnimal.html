@@ -5,16 +5,14 @@
 <html lang="en">
 <head>
     <meta charset="utf-8"/>
-    <title>Assignment 1: Painting</title>
+    <title>Assignment 2: Blocky Animal</title>
 
     <!-- Javascript references -->
     <script src="Point.js"></script>
     <script src="Triangle.js"></script>
     <script src="Circle.js"></script>
     <script src="Cube.js"></script>
-    <script src="ExactTriangle.js"></script>
-    <script src="ExactSquare.js"></script>
-    <script src="RenderDemo.js"></script>
+    <script src="Cylinder.js"></script>
     <script src="BlockyAnimal.js"></script>
 
     <!-- WebGL library references -->
@@ -39,11 +37,19 @@
 
     <!-- Size and segment sliders -->
     <p>
-        Magenta <input type="range" min="-45" max="45" value ="0" class="slider" id="magentaSlide">
+        Head Rotation <input type="range" min="-30" max="30" value ="0" class="slider" id="headSlide">
     </p>
 
     <p>
-        Yellow <input type="range" min="-45" max="45" value ="0" class="slider" id="yellowSlide">
+        Body Segment 1 Rotation <input type="range" min="-10" max="10" value ="0" class="slider" id="body1Slide">
+    </p>
+
+    <p>
+        Body Segment 2 Rotation <input type="range" min="-10" max="10" value ="0" class="slider" id="body2Slide">
+    </p>
+
+    <p>
+        Body Segment 3 Rotation <input type="range" min="-10" max="10" value ="0" class="slider" id="body3Slide">
     </p>
 
     <p>
@@ -54,6 +60,10 @@
 
     <!-- Grader Notes -->
     <label>Grader Notes:</label> <br></br>
+
+    <p>
+        Pressing the Animation On button displays the fish swimming in a void.
+    </p>
 </body>
 
 </html>
