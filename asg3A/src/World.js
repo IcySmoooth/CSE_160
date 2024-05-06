@@ -19,6 +19,7 @@ let FSHADER_SOURCE = `
     varying vec2 v_UV;
     uniform vec4 u_FragColor;
     uniform sampler2D u_Sampler0;
+    uniform sampler2D u_Sampler1;
     uniform int u_WhichTexture;
     void main(){
         if (u_WhichTexture == -2) {                       // Use color
@@ -27,6 +28,8 @@ let FSHADER_SOURCE = `
             gl_FragColor = vec4(v_UV, 1.0, 1.0);
         } else if (u_WhichTexture == 0) {                 // Use texture0
             gl_FragColor = texture2D(u_Sampler0, v_UV);
+        } else if (u_WhichTexture == 1) {                 // Use texture1
+            gl_FragColor = texture2D(u_Sampler1, v_UV);
         } else {                                        // Error
             gl_FragColor = vec4(1, .2, .2, 1);
         }
@@ -49,7 +52,8 @@ let u_ModelMatrix;
 let u_ProjectionMatrix;
 let u_ViewMatrix;
 let u_GlobalRotateMatrix;
-let u_sampler0;
+let u_Sampler0;
+let u_Sampler1;
 
 let g_selectedType = POINT;
 let shapeColor = [1.0, 1.0, 1.0, 1.0];
@@ -147,10 +151,17 @@ function connectVariablesToGLSL() {
         return;
     }
 
-    // Get pointer location of u_Sampler
+    // Get pointer location of u_Sampler0
     u_Sampler0 = gl.getUniformLocation(gl.program, "u_Sampler0");
     if (!u_Sampler0) {
-        console.log("Failed to create the storage location of u_Sampler");
+        console.log("Failed to create the storage location of u_Sampler0");
+        return false;
+    }
+
+    // Get pointer location of u_Sampler1
+    u_Sampler1 = gl.getUniformLocation(gl.program, "u_Sampler1");
+    if (!u_Sampler1) {
+        console.log("Failed to create the storage location of u_Sampler1");
         return false;
     }
 
@@ -160,16 +171,23 @@ function connectVariablesToGLSL() {
 }
 
 function initTextures() {
-    var image = new Image(); // Create image object
-    if (!image) {
-        console.log("Failed to create the image object");
+    var skybox = new Image(); // Create image object
+    if (!skybox) {
+        console.log("Failed to create the skybox object");
         return false;
     }
     // Register event handler to be called on loading an image
-    image.onload = function() { sendImageToTEXTURE0(image); };
-    image.src = "rat.jpg"; // Tell the browser to load an image
+    skybox.onload = function() { sendImageToTEXTURE0(skybox); };
+    skybox.src = "sky.jpg"; // Tell the browser to load an image
 
-    // TODO: Add more texture loading
+    var wool = new Image(); // Create image object
+    if (!wool) {
+        console.log("Failed to create the wool object");
+        return false;
+    }
+    // Register event handler to be called on loading an image
+    wool.onload = function() { sendImageToTEXTURE1(wool); };
+    wool.src = "Orange_Wool.jpg"; // Tell the browser to load an image
 
     return true;
 }
@@ -188,10 +206,24 @@ function sendImageToTEXTURE0(image) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // Set texture parameters
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image); // Set texture image
 
-    gl.uniform1i(u_sampler0, 0); // Set the texture unit 0 to the sampler
+    gl.uniform1i(u_Sampler0, 0); // Set the texture unit 0 to the sampler
+}
 
-    console.log("finished loadTexture");
+function sendImageToTEXTURE1(image) {
+    var texture = gl.createTexture(); // Create texture object
+    if (!texture) {
+        console.log("Failed to create the texture object");
+        return false;
+    }
 
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1); // Flip the image's y-axis
+    gl.activeTexture(gl.TEXTURE1); // Enable texture unit0
+    gl.bindTexture(gl.TEXTURE_2D, texture); // Bind the texture object to the target
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // Set texture parameters
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image); // Set texture image
+
+    gl.uniform1i(u_Sampler1, 1); // Set the texture unit 1 to the sampler
 }
 
 function addActionsForHtmlUI() {
@@ -274,83 +306,27 @@ function renderAllShapes() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.clear(gl.COLOR_BUFFER_BIT); // Clear canvas
 
-    // Head
-    var head = new Cube();
-    head.color = [1, 1, 0, 1];
-    head.matrix.translate(-.5, -.2, g_headPosition);
-    //head.matrix.rotate(g_headAngle, 0, 1, 0);
-    head.matrix.rotate(g_headAngle, 1, 1, 0);
-    head.matrix.scale(.2, .2, .2);
-    var headCoordMat = new Matrix4(head.matrix);
-    head.render();
+    // Skybox
+    var skybox = new Cube();
+    skybox.textureNum = 0;
+    skybox.matrix.translate(-1, -1, -3);
+    skybox.matrix.scale(3, 3, 3);
+    skybox.render();
 
-    // Right eye
-    var rEye = new Cube();
-    rEye.color = [0, 0, 0, 1];
-    rEye.matrix = new Matrix4(headCoordMat);
-    rEye.matrix.translate(0, .5, -.05);
-    //lEye.matrix.rotate(g_headAngle, 0, 1, 0);
-    rEye.matrix.scale(.2, .2, .05);
-    rEye.render();
+    // Ground
+    var ground = new Cube();
+    ground.color = [0.9, 0.8, 0.6, 1];
+    ground.textureNum = -2;
+    ground.matrix.translate(-.75, -.7, -1);
+    ground.matrix.scale(1.5, .2, 1.5);
+    ground.render();
 
-    // Left eye
-    var lEye = new Cube();
-    lEye.color = [0, 0, 0, 1];
-    lEye.matrix = new Matrix4(headCoordMat);
-    lEye.matrix.translate(0, .5, 1.03);
-    //lEye.matrix.rotate(g_headAngle, 0, 1, 0);
-    lEye.matrix.scale(.2, .2, .05);
-    lEye.render();
-
-    // Body Segment 1
-    var body1 = new Cube();
-    body1.color = [1, 0, 0, 1];
-    body1.matrix = headCoordMat;
-    body1.matrix.translate(1, -.45, -.165);
-    body1.matrix.rotate(g_body1Angle, 0, 1, 0);
-    body1.matrix.scale(2, 2, 1.3);
-    var body1CoordMat = new Matrix4(body1.matrix);
-    body1.render();
-
-    // Body Segment 2
-    var body2 = new Cube();
-    body2.color = [1, .1, .1, 1];
-    body2.matrix = body1CoordMat;
-    body2.matrix.translate(0.99, 0.1, .1);
-    body2.matrix.rotate(g_body2Angle, 0, 1, 0);
-    body2.matrix.scale(.7, .8, .8);
-    var body2CoordMat = new Matrix4(body2.matrix);
-    body2.render();
-
-    // Body Segment 3
-    var body3 = new Cube();
-    body3.color = [1, .2, .2, 1];
-    body3.matrix = body2CoordMat;
-    body3.matrix.translate(0.99, 0.1, .1);
-    body3.matrix.rotate(g_body3Angle, 0, 1, 0);
-    body3.matrix.scale(.7, .8, .8);
-    var body3CoordMat = new Matrix4(body3.matrix);
-    body3.render();
-
-    // Left fin
-    var lFin = new Cube();
-    lFin.color = [1, 1, 0, 1];
-    lFin.matrix = new Matrix4(body1CoordMat);
-    lFin.matrix.translate(-1, 0, -.3);
-    lFin.matrix.rotate(-15, 0, 0, 1);
-    lFin.matrix.scale(.6, .4, .2);
-    lFin.matrix.rotate(g_finAngle, 0, 1, 0);
-    lFin.render();
-
-    // Right fin
-    var rFin = new Cube();
-    rFin.color = [1, 1, 0, 1];
-    rFin.matrix = new Matrix4(body1CoordMat);
-    rFin.matrix.translate(-1, 0, 1.1);
-    rFin.matrix.rotate(-15, 0, 0, 1);
-    rFin.matrix.scale(.6, .4, .2);
-    rFin.matrix.rotate(g_finAngle, 0, 1, 0);
-    rFin.render();
+    // Wool
+    var wool = new Cube();
+    wool.textureNum = 1;
+    wool.matrix.translate(-.3, -.5, -.3);
+    wool.matrix.scale(.3, .3, .3);
+    wool.render();
 
     // Check the timer at the end of the function
     var duration = performance.now() - startTime;
