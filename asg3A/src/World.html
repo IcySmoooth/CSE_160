@@ -1,0 +1,68 @@
+<!-- Michael Nieto -->
+<!-- mdnieto@ucsc.edu -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Assignment 3A: Blocky World</title>
+
+    <!-- Javascript references -->
+    <script src="Point.js"></script>
+    <script src="Triangle.js"></script>
+    <script src="Circle.js"></script>
+    <script src="Cube.js"></script>
+    <script src="World.js"></script>
+
+    <!-- WebGL library references -->
+    <script src="../lib/cuon-utils.js"></script>
+    <script src="../lib/cuon-matrix.js"></script>
+    <script src="../lib/webgl-utils.js"></script>
+    <script src="../lib/webgl-debug.js"></script>
+</head>
+
+<body onload="main()">
+    <!-- Create main canvas -->
+    <canvas id="webgl" width="400" height="400">Please use a browser that supports "canvas"</canvas> <br></br>
+
+    <!-- Performance text -->
+    <p id="performance">ms: 0 fps</p>
+
+    Animation:
+    <button type="button" id="animationYellowOnButton">ON</button>
+    <button type="button" id="animationYellowOffButton">OFF</button>
+
+    <br></br>
+
+    <!-- Size and segment sliders -->
+    <p>
+        Head Rotation <input type="range" min="-30" max="30" value ="0" class="slider" id="headSlide">
+    </p>
+
+    <p>
+        Body Segment 1 Rotation <input type="range" min="-10" max="10" value ="0" class="slider" id="body1Slide">
+    </p>
+
+    <p>
+        Body Segment 2 Rotation <input type="range" min="-10" max="10" value ="0" class="slider" id="body2Slide">
+    </p>
+
+    <p>
+        Body Segment 3 Rotation <input type="range" min="-10" max="10" value ="0" class="slider" id="body3Slide">
+    </p>
+
+    <p>
+        Camera Angle <input type="range" min="0" max="90" value ="5" class="slider" id="angleSlide">
+    </p>
+
+    <br></br>
+
+    <!-- Grader Notes -->
+    <label>Grader Notes:</label> <br></br>
+
+    <p>
+        Pressing the Animation On button displays the fish swimming in a void.
+    </p>
+</body>
+
+</html>
