@@ -77,6 +77,8 @@ let g_globalAngle = 0;
 let isRotatingCamera = false;
 let prevMousePos = [ 0.0, 0.0 ];
 
+let g_map;
+
 function setupWebGL() {
     // Set up canvas reference 
     canvas = document.getElementById("webgl");
@@ -307,6 +309,8 @@ function renderAllShapes() {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.clear(gl.COLOR_BUFFER_BIT); // Clear canvas
 
+    g_map.drawMap();
+
     // Skybox
     var skybox = new Cube();
     skybox.textureNum = 0;
@@ -342,6 +346,7 @@ function main() {
     connectVariablesToGLSL();
     addActionsForHtmlUI();
     g_camera = new Camera();
+    g_map = new Map();
     canvas.onmousedown = onClick; // Register function to be called on mouse click
     document.onkeydown = keydown;
     canvas.onmouseup = function(ev) { isRotatingCamera = false; };
