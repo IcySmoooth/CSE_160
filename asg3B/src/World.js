@@ -379,7 +379,7 @@ function renderAllShapes() {
     var wool = new Cube();
     wool.textureNum = 1;
     //wool.textureNum = -1;
-    wool.matrix.translate(-.3, -.5, -.3);
+    wool.matrix.translate(1, -.5, -.3);
     //wool.matrix.scale(.3, .3, .3);
     wool.matrix.scale(.5, .3, .6);
     //wool.matrix.rotate(45, 1, 0, 0);
