@@ -74,37 +74,37 @@ class Cube {
 
         // cube's back
         vertices = vertices.concat([0,0,0, 1,0,0, 1,1,0]);
-        vertices = vertices.concat([0,0,0, 0,1,0, 1,1,0]);
         uv = uv.concat([0,0, 1,0, 1,1]);
+        vertices = vertices.concat([0,0,0, 0,1,0, 1,1,0]);
         uv = uv.concat([0,0, 0,1, 1,1]);
 
         // Define the cube's front
         vertices = vertices.concat([1,0,1, 0,0,1, 0,1,1]);
-        vertices = vertices.concat([1,0,1, 1,1,1, 0,1,1]);
         uv = uv.concat([0,0, 1,0, 1,1]);
+        vertices = vertices.concat([1,0,1, 1,1,1, 0,1,1]);
         uv = uv.concat([0,0, 0,1, 1,1]);
 
         // Define the cube's top
         vertices = vertices.concat([0,1,0, 0,1,1, 1,1,1]);
-        vertices = vertices.concat([0,1,0, 1,1,0, 1,1,1]);
         uv = uv.concat([0,0, 0,1, 1,1]);
+        vertices = vertices.concat([0,1,0, 1,1,0, 1,1,1]);
         uv = uv.concat([0,0, 1,0, 1,1]);
 
         // Define the cube's bottom
-        vertices = vertices.concat([0, 0, 1, 0, 0, 0, 1, 0, 0]);
+        vertices = vertices.concat([0,0,1, 0,0,0, 1,0,0]);
         uv = uv.concat([0,0, 0,1, 1,1]);
-        vertices = vertices.concat([0, 0, 1, 1, 0, 1, 1, 0, 0]);
+        vertices = vertices.concat([0,0,1, 1,0,1, 1,0,0]);
         uv = uv.concat([0,0, 1,0, 1,1]);
 
         // Define the cube's sides
-        vertices = vertices.concat([0, 0, 1, 0, 0, 0, 0, 1, 0]);
-        vertices = vertices.concat([0, 0, 1, 0, 1, 1, 0, 1, 0]);
+        vertices = vertices.concat([0,0,1, 0,0,0, 0,1,0]);
         uv = uv.concat([0,0, 1,0, 1,1]);
+        vertices = vertices.concat([0,0,1, 0,1,1, 0,1,0]);
         uv = uv.concat([0,0, 0,1, 1,1]);
 
-        vertices = vertices.concat([1, 0, 0, 1, 0, 1, 1, 1, 1]);
-        vertices = vertices.concat([1, 0, 0, 1, 1, 0, 1, 1, 1]);
+        vertices = vertices.concat([1,0,0, 1,0,1, 1,1,1]);
         uv = uv.concat([0,0, 1,0, 1,1]);
+        vertices = vertices.concat([1,0,0, 1,1,0, 1,1,1]);
         uv = uv.concat([0,0, 0,1, 1,1]);
 
         //var allVerts = [];
