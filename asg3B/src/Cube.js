@@ -135,6 +135,6 @@ class Cube {
         //allVerts = allVerts.concat( [0,0,1, 0,1,1, 1,1,1] );
 
         //console.log(new Float32Array(allVerts));
-        drawTriangle3D(vertices);
+        drawTriangle3D(vertices, uv);
     }
 }

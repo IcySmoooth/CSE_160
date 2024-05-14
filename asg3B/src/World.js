@@ -76,6 +76,20 @@ let g_globalAngle = 0;
 // User Mouse controls
 let isRotatingCamera = false;
 let prevMousePos = [ 0.0, 0.0 ];
+let g_cursorSpeed = 0.25;
+const MOVEMENT_SPEEDS = {
+    MOVE: 0.15,
+    MOVE_ACCEL: 0.01,
+    PAN: 2.5,
+    PAN_ACCEL: 0.25
+};
+let currentSpeeds = {
+    z: 0,
+    x: 0,
+    y: 0,
+    yPan: 0,
+    xPan: 0
+}
 
 let g_map;
 
@@ -270,6 +284,13 @@ function updateCamera(new_mouse_pos) {
     prevMousePos = new_mouse_pos;
 }
 
+// Help with mouse camera movement used from:
+// https://people.ucsc.edu/~jwdicker/Asgn3/BlockyWorld.html
+function rotateCamera(event) {
+      g_camera.pan(event.movementX * g_cursorSpeed, Camera.DIRECTIONS.RIGHT);
+      g_camera.pan(event.movementY * g_cursorSpeed, Camera.DIRECTIONS.DOWN);
+  }
+
 function convertCoordinatesEventToGL(ev) {
     let x = ev.clientX; // X coordinate of a mouse pointer
     let y = ev.clientY // Y coordinate of a mouse pointer
@@ -347,6 +368,33 @@ function main() {
     addActionsForHtmlUI();
     g_camera = new Camera();
     g_map = new Map();
+
+    canvas.onclick = async () => { if( !document.pointerLockElement ) { await canvas.requestPointerLock(); } };
+    document.addEventListener("pointerlockchange", () => {
+        if(document.pointerLockElement === canvas) {
+            document.onmousemove = (e) => rotateCamera(e);
+            document.onclick = (e) => {
+            // Determine the grid space being clicked on
+            let blockPos = [];
+            blockPos.push(Math.round(g_camera.at.elements[0]) + 16);
+            blockPos.push(Math.round(g_camera.at.elements[1]) - -1);
+            blockPos.push(Math.round(g_camera.at.elements[2]) + 16);
+
+            if(e.button == 2) {
+                // Right click = place block
+                setBlock(blockPos[0], blockPos[1], blockPos[2], TEXTURES.TEXTURE2);
+            } else if(e.button == 0) {
+                // Left click = remove block
+                removeBlock(blockPos[0], blockPos[1], blockPos[2]);
+            }
+        }
+        } else {
+        // Remove the listeners
+        document.onmousemove = null;
+        document.onclick = null;
+        }
+    })
+
     canvas.onmousedown = onClick; // Register function to be called on mouse click
     document.onkeydown = keydown;
     canvas.onmouseup = function(ev) { isRotatingCamera = false; };

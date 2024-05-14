@@ -1,4 +1,13 @@
 class Camera {
+    static DIRECTIONS = {
+        FORWARD: 0,
+        BACKWARD: 1,
+        LEFT: 2,
+        RIGHT: 3,
+        UP: 4,
+        DOWN: 5
+    }
+
     constructor() {
         this.fov = 60;
         this.aspect = canvas.width/canvas.height;
@@ -63,6 +72,69 @@ class Camera {
         s.mul(this.speed);
         this.at = this.at.add(s);
         this.eye = this.eye.add(s);
+    }
+
+    // Help with mouse camera movement used from:
+    // https://people.ucsc.edu/~jwdicker/Asgn3/BlockyWorld.html
+    pan(alpha, direction) {
+        if (alpha == 0) { return; }
+
+        // Find the forward vector
+        let f = new Vector3();
+        f.set(this.at);
+        f.sub(this.eye);
+
+        // Calculate the axis of rotation for up/down movements
+        let xRotate = Vector3.cross(f, this.up).elements;
+
+        // Find the current angle between the 'up' and 'forward' vectors
+        const THETA = ((Math.acos(Vector3.dot(this.up, f) / (this.up.magnitude() * f.magnitude()))) * 180) / Math.PI;
+
+        // Define a lambda function to keep the vertical pan in range
+        function keepInRange(alpha, direction) {
+            // The smallest angle between the 'up' vector and the 'forward' vector
+            const EPSILON = 0.001;
+
+            let newTheta = (direction) ? THETA - alpha : THETA + alpha;
+
+            if(newTheta > (180 - EPSILON) || newTheta < EPSILON) {
+                // Rotating would put the camera out of bounds. Don't rotate
+                return 0;
+            } else {
+                return alpha;
+            }
+        }
+
+        // Rotate in the given direction
+        let rotationMatrix = new Matrix4();
+        switch(direction) {
+        case Camera.DIRECTIONS.LEFT:
+            rotationMatrix.setRotate(alpha, this.up.elements[0], this.up.elements[1], this.up.elements[2]);
+            break;
+        case Camera.DIRECTIONS.RIGHT:
+            rotationMatrix.setRotate(-alpha, this.up.elements[0], this.up.elements[1], this.up.elements[2]);
+            break;
+        case Camera.DIRECTIONS.UP:
+            alpha = keepInRange(alpha, true);
+            // console.log(alpha);
+            rotationMatrix.setRotate(alpha, xRotate[0], xRotate[1], xRotate[2]);
+            break;
+        case Camera.DIRECTIONS.DOWN:
+            alpha = keepInRange(alpha, false);
+            // console.log(alpha);
+            rotationMatrix.setRotate(-alpha, xRotate[0], xRotate[1], xRotate[2]);
+            break;
+        default:
+            console.warn(`Invalid direction passed to Camera.pan(): ${direction}`);
+            return;
+        }
+        let fPrime = rotationMatrix.multiplyMatrixVector3(f);
+        fPrime.normalize();
+
+        // Set the view
+        this.at.set(this.eye);
+        this.at.add(fPrime);
+        this.updateView();
     }
 
     panLeft() {

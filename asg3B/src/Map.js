@@ -43,7 +43,7 @@ class Map {
             for (var y=0; y<32; y++) {
                 if (this.map[x][y] == 1) {
                     body.color = [0.8, 1, 1, 1];
-                    body.textureNum = -2;
+                    body.textureNum = -1;
                     body.matrix.setTranslate(0, -0.75, 0);
                     body.matrix.scale(.3, .3, .3);
                     body.matrix.translate(x-16, 0, y-16);
