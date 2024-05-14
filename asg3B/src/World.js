@@ -20,6 +20,7 @@ let FSHADER_SOURCE = `
     uniform vec4 u_FragColor;
     uniform sampler2D u_Sampler0;
     uniform sampler2D u_Sampler1;
+    uniform sampler2D u_Sampler2;
     uniform int u_WhichTexture;
     void main(){
         if (u_WhichTexture == -2) {                       // Use color
@@ -30,6 +31,8 @@ let FSHADER_SOURCE = `
             gl_FragColor = texture2D(u_Sampler0, v_UV);
         } else if (u_WhichTexture == 1) {                 // Use texture1
             gl_FragColor = texture2D(u_Sampler1, v_UV);
+        } else if (u_WhichTexture == 2) {                 // Use texture2
+            gl_FragColor = texture2D(u_Sampler2, v_UV);
         } else {                                        // Error
             gl_FragColor = vec4(1, .2, .2, 1);
         }
@@ -54,6 +57,7 @@ let u_ViewMatrix;
 let u_GlobalRotateMatrix;
 let u_Sampler0;
 let u_Sampler1;
+let u_Sampler2;
 
 let g_selectedType = POINT;
 let shapeColor = [1.0, 1.0, 1.0, 1.0];
@@ -184,6 +188,13 @@ function connectVariablesToGLSL() {
         return false;
     }
 
+    // Get pointer location of u_Sampler2
+    u_Sampler2 = gl.getUniformLocation(gl.program, "u_Sampler2");
+    if (!u_Sampler2) {
+        console.log("Failed to create the storage location of u_Sampler2");
+        return false;
+    }
+
     // Intial value for matrix identity
     var identityM = new Matrix4();
     gl.uniformMatrix4fv(u_ModelMatrix, false, identityM.elements);
@@ -207,6 +218,15 @@ function initTextures() {
     // Register event handler to be called on loading an image
     wool.onload = function() { sendImageToTEXTURE1(wool); };
     wool.src = "Orange_Wool.jpg"; // Tell the browser to load an image
+
+    var dirt = new Image(); // Create image object
+    if (!dirt) {
+        console.log("Failed to create the dirt object");
+        return false;
+    }
+    // Register event handler to be called on loading an image
+    dirt.onload = function() { sendImageToTEXTURE2(dirt); };
+    dirt.src = "dirt.jpg"; // Tell the browser to load an image
 
     return true;
 }
@@ -243,6 +263,23 @@ function sendImageToTEXTURE1(image) {
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image); // Set texture image
 
     gl.uniform1i(u_Sampler1, 1); // Set the texture unit 1 to the sampler
+}
+
+function sendImageToTEXTURE2(image) {
+    var texture = gl.createTexture(); // Create texture object
+    if (!texture) {
+        console.log("Failed to create the texture object");
+        return false;
+    }
+
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1); // Flip the image's y-axis
+    gl.activeTexture(gl.TEXTURE2); // Enable texture unit0
+    gl.bindTexture(gl.TEXTURE_2D, texture); // Bind the texture object to the target
+
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); // Set texture parameters
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image); // Set texture image
+
+    gl.uniform1i(u_Sampler2, 2); // Set the texture unit 1 to the sampler
 }
 
 function addActionsForHtmlUI() {
@@ -343,8 +380,8 @@ function renderAllShapes() {
     var ground = new Cube();
     ground.color = [0.9, 0.8, 0.6, 1];
     ground.textureNum = -2;
-    ground.matrix.translate(-.75, -.7, -1);
-    ground.matrix.scale(1.5, .2, 1.5);
+    ground.matrix.translate(-5, -0.95, -5);
+    ground.matrix.scale(10, .2, 10);
     ground.render();
 
     // Wool
