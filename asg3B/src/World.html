@@ -31,29 +31,6 @@
     <!-- Performance text -->
     <p id="performance">ms: 0 fps</p>
 
-    Animation:
-    <button type="button" id="animationYellowOnButton">ON</button>
-    <button type="button" id="animationYellowOffButton">OFF</button>
-
-    <br></br>
-
-    <!-- Size and segment sliders -->
-    <p>
-        Head Rotation <input type="range" min="-30" max="30" value ="0" class="slider" id="headSlide">
-    </p>
-
-    <p>
-        Body Segment 1 Rotation <input type="range" min="-10" max="10" value ="0" class="slider" id="body1Slide">
-    </p>
-
-    <p>
-        Body Segment 2 Rotation <input type="range" min="-10" max="10" value ="0" class="slider" id="body2Slide">
-    </p>
-
-    <p>
-        Body Segment 3 Rotation <input type="range" min="-10" max="10" value ="0" class="slider" id="body3Slide">
-    </p>
-
     <p>
         Camera Angle <input type="range" min="0" max="90" value ="5" class="slider" id="angleSlide">
     </p>
@@ -64,11 +41,22 @@
     <label>Grader Notes:</label> <br></br>
 
     <p>
-        Click and drag in the scene to move the camera.
+        Controls:
+    </p>
+        W - Move Forward/n
+
+        S - Move Backwards
+        A - Move Left
+        D - Move Right
+
+        Q - Pan Camera Left
+        E - Pan Camera Right
+
+        Mouse Move - Rotate camera
     </p>
     <p>
-        I added a colored cube as the ground floor and two textured cubes: one for the skybox and one for a cube on the ground.
-        The skybox has some clipping problems if the camera is rotated, as the skybox wouldn't render properly if I made it too large.
+        Details:
+        Help find the hidden fish friend!
     </p>
 </body>
 

@@ -69,7 +69,7 @@ var g_camera;
 // Animation variables
 let g_swimAnimation=false;
 let g_headPosition = 0;
-let g_headAngle = 0;
+let g_headAngle = 90;
 let g_body1Angle = 0;
 let g_body2Angle = 0;
 let g_body3Angle = 0;
@@ -283,15 +283,6 @@ function sendImageToTEXTURE2(image) {
 }
 
 function addActionsForHtmlUI() {
-    // Button Events
-    document.getElementById("animationYellowOnButton").onclick = function() {g_swimAnimation = true;};
-    document.getElementById("animationYellowOffButton").onclick = function() {g_swimAnimation = false;};
-
-    // Slider Events
-    document.getElementById("headSlide").addEventListener('mousemove', function(){ g_headAngle = this.value; renderAllShapes(); });
-    document.getElementById("body1Slide").addEventListener('mousemove', function(){ g_body1Angle = this.value; renderAllShapes(); });
-    document.getElementById("body2Slide").addEventListener('mousemove', function(){ g_body2Angle = this.value; renderAllShapes(); });
-    document.getElementById("body3Slide").addEventListener('mousemove', function(){ g_body3Angle = this.value; renderAllShapes(); });
     document.getElementById("angleSlide").addEventListener('mousemove', function(){ g_globalAngle = this.value; renderAllShapes(); });
 }
 
@@ -378,7 +369,7 @@ function renderAllShapes() {
 
     // Ground
     var ground = new Cube();
-    ground.color = [0.9, 0.8, 0.6, 1];
+    ground.color = [0.502, 0.502, 0.502, 1];
     ground.textureNum = -2;
     ground.matrix.translate(-5, -0.95, -5);
     ground.matrix.scale(10, .2, 10);
@@ -394,10 +385,88 @@ function renderAllShapes() {
     //wool.matrix.rotate(45, 1, 0, 0);
     wool.render();
 
+    // Head
+    var head = new Cube();
+    head.color = [1, 1, 0, 1];
+    head.matrix.translate(-4.4, -.5, g_headPosition-3);
+    head.matrix.rotate(g_headAngle, 0, 1, 0);
+    head.matrix.scale(.15, .15, .15);
+    var headCoordMat = new Matrix4(head.matrix);
+    head.render();
+
+    // Right eye
+    var rEye = new Cube();
+    rEye.color = [0, 0, 0, 1];
+    rEye.matrix = new Matrix4(headCoordMat);
+    rEye.matrix.translate(0, .5, -.05);
+    //lEye.matrix.rotate(g_headAngle, 0, 1, 0);
+    rEye.matrix.scale(.2, .2, .05);
+    rEye.render();
+
+    // Left eye
+    var lEye = new Cube();
+    lEye.color = [0, 0, 0, 1];
+    lEye.matrix = new Matrix4(headCoordMat);
+    lEye.matrix.translate(0, .5, 1.03);
+    //lEye.matrix.rotate(g_headAngle, 0, 1, 0);
+    lEye.matrix.scale(.2, .2, .05);
+    lEye.render();
+
+    // Body Segment 1
+    var body1 = new Cube();
+    body1.color = [1, 0, 0, 1];
+    body1.matrix = headCoordMat;
+    body1.matrix.translate(1, -.45, -.165);
+    body1.matrix.rotate(g_body1Angle, 0, 1, 0);
+    body1.matrix.scale(2, 2, 1.3);
+    var body1CoordMat = new Matrix4(body1.matrix);
+    body1.render();
+
+    // Body Segment 2
+    var body2 = new Cube();
+    body2.color = [1, .1, .1, 1];
+    body2.matrix = body1CoordMat;
+    body2.matrix.translate(0.99, 0.1, .1);
+    body2.matrix.rotate(g_body2Angle, 0, 1, 0);
+    body2.matrix.scale(.7, .8, .8);
+    var body2CoordMat = new Matrix4(body2.matrix);
+    body2.render();
+
+    // Body Segment 3
+    var body3 = new Cube();
+    body3.color = [1, .2, .2, 1];
+    body3.matrix = body2CoordMat;
+    body3.matrix.translate(0.99, 0.1, .1);
+    body3.matrix.rotate(g_body3Angle, 0, 1, 0);
+    body3.matrix.scale(.7, .8, .8);
+    var body3CoordMat = new Matrix4(body3.matrix);
+    body3.render();
+
+    // Left fin
+    var lFin = new Cube();
+    lFin.color = [1, 1, 0, 1];
+    lFin.matrix = new Matrix4(body1CoordMat);
+    lFin.matrix.translate(-1, 0, -.3);
+    lFin.matrix.rotate(-15, 0, 0, 1);
+    lFin.matrix.scale(.6, .4, .2);
+    lFin.matrix.rotate(g_finAngle, 0, 1, 0);
+    lFin.render();
+
+    // Right fin
+    var rFin = new Cube();
+    rFin.color = [1, 1, 0, 1];
+    rFin.matrix = new Matrix4(body1CoordMat);
+    rFin.matrix.translate(-1, 0, 1.1);
+    rFin.matrix.rotate(-15, 0, 0, 1);
+    rFin.matrix.scale(.6, .4, .2);
+    rFin.matrix.rotate(g_finAngle, 0, 1, 0);
+    rFin.render();
+
     // Check the timer at the end of the function
     var duration = performance.now() - startTime;
     sendTextToHTML(" ms: " + Math.floor(duration) + " fps: " + Math.floor(1000/duration), "performance");
 }
+
 
 function main() {
     setupWebGL();
