@@ -18,7 +18,7 @@ function main() {
   const far = 100;
   const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
   camera.position.y = 5;
-  camera.position.z = 20;
+  camera.position.z = 30;
 
   class MinMaxGUIHelper {
     constructor(obj, minProp, maxProp, minDif) {
@@ -81,6 +81,17 @@ function main() {
 	scene.add( directionalLight );
   scene.add( directionalLight.target );
 
+  // Define point lighting
+  const pointColor = 0xFFFF00;
+  const pointIntensity = 150;
+  const pointLight1 = new THREE.PointLight(pointColor, pointIntensity);
+  pointLight1.position.set(2.5, 4.2, 5.5);
+  scene.add(pointLight1);
+
+  const pointLight2 = new THREE.PointLight(pointColor, pointIntensity);
+  pointLight2.position.set(-2.5, 4.2, 5.5);
+  scene.add(pointLight2);
+
 	const gui = new GUI();
 	gui.add( camera, 'fov', 1, 180 ).onChange( updateCamera );
 	const minMaxGUIHelper = new MinMaxGUIHelper( camera, 'near', 'far', 0.1 );
@@ -94,6 +105,10 @@ function main() {
   gui.addColor(new ColorGUIHelper(hemisphereLight, 'color'), 'value').name('h_skyColor');
   gui.addColor(new ColorGUIHelper(hemisphereLight, 'groundColor'), 'value').name('h_groundColor');
   gui.add(hemisphereLight, 'intensity', 0, 2, 0.01);
+  gui.addColor(new ColorGUIHelper(pointLight1, 'color'), 'value').name('p_color1');
+  gui.add(pointLight1, 'intensity', 0, 250, 0.01);
+  gui.addColor(new ColorGUIHelper(pointLight2, 'color'), 'value').name('p_color2');
+  gui.add(pointLight2, 'intensity', 0, 250, 0.01);
 
 	const controls = new OrbitControls( camera, canvas );
 	controls.target.set( 0, 5, 0 );
@@ -286,26 +301,64 @@ function main() {
   const torch1 = new THREE.Mesh( torchGeometry, torchMaterial );
   torch1.position.set(2.5, 3.2, 5.2);
   torch1.rotateX(15 * (Math.PI / 180));
-  scene.add(torch1)
+  scene.add(torch1);
 
   const torch2 = new THREE.Mesh( torchGeometry, torchMaterial );
   torch2.position.set(-2.5, 3.2, 5.2);
   torch2.rotateX(15 * (Math.PI / 180));
-  scene.add(torch2)
+  scene.add(torch2);
 
-	const shapes = [
-	];
+  // Create crates
+  const woodCrateLoader = new THREE.TextureLoader();
+  const woodCrateTexture = woodCrateLoader.load('../img/wood_crate.jpg');
+  woodCrateTexture.colorSpace = THREE.SRGBColorSpace;
+
+  const woodCrateW = 1;
+  const woodCrateH = 1;
+  const woodCrateD = 1;
+  const woodCrateGeometry = new THREE.BoxGeometry( woodCrateW, woodCrateH, woodCrateD );
+
+  const woodCrateMaterial = new THREE.MeshPhongMaterial( { map: woodCrateTexture } ); 
+  const woodCrate1 = new THREE.Mesh( woodCrateGeometry, woodCrateMaterial );
+  woodCrate1.position.set(6, -.5, 12);
+  scene.add(woodCrate1);
+ 
+  const woodCrate2 = new THREE.Mesh( woodCrateGeometry, woodCrateMaterial );
+  woodCrate2.position.set(6, .5, 12);
+  woodCrate2.rotateY(70 * (Math.PI / 180));
+  scene.add(woodCrate2);
+
+  const woodCrate3 = new THREE.Mesh( woodCrateGeometry, woodCrateMaterial );
+  woodCrate3.position.set(6, 1.5, 12);
+  woodCrate3.rotateY(270 * (Math.PI / 180));
+  scene.add(woodCrate3);
+
+  // Create cannonballs
+  const cannonballLoader = new THREE.TextureLoader();
+  const cannonballTexture = cannonballLoader.load('../img/cannonball.png');
+  cannonballTexture.colorSpace = THREE.SRGBColorSpace;
+
+  const cannonballR = 0.5; // Radius
+  const cannonballW = 8; // Width Segments
+  const cannonballH = 8; // Height Segments
+  const cannonballGeometry = new THREE.SphereGeometry( cannonballR, cannonballW, cannonballH );
+
+  const cannonballMaterial = new THREE.MeshPhongMaterial( { map: cannonballTexture } ); 
+  const cannonball1 = new THREE.Mesh( cannonballGeometry, cannonballMaterial );
+  cannonball1.position.set(6, -.5, 14);
+  scene.add(cannonball1);
+
+  const cannonball2 = new THREE.Mesh( cannonballGeometry, cannonballMaterial );
+  cannonball2.position.set(7, -.5, 13);
+  scene.add(cannonball2);
+
+  const cannonball3 = new THREE.Mesh( cannonballGeometry, cannonballMaterial );
+  cannonball3.position.set(7, -.5, 14);
+  scene.add(cannonball3);
 
 	function render(time) {
 
 		time *= 0.001; // convert time to seconds
-
-		shapes.forEach((shape, ndx) => {
-			const speed = 1 + ndx * .1;
-			const rot = time * speed;
-			shape.rotation.x = rot;
-			shape.rotation.y = rot;
-		});
 
 		renderer.render(scene, camera);
 

@@ -1,0 +1,43 @@
+<!-- Michael Nieto -->
+<!-- mdnieto@ucsc.edu -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Assignment 5B: High Level Graphics</title>
+
+    <!-- Library references -->
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "../lib/three.module.js",
+            "obj": "../lib/addons/OBJLoader.js",
+            "orbit": "../lib/addons/OrbitControls.js",
+            "gui": "../lib/addons/lil-gui.module.min.js"
+          }
+        }
+        </script>
+
+</head>
+
+<body>
+    <!-- Javascript references -->
+    <script src="asg5B.js" type="module"></script>
+
+    <!-- Create main canvas -->
+    <canvas id="c"></canvas>  <br></br>
+        
+    <!-- Grader Notes -->
+    <label>Grader Notes:</label> <br></br>
+    <label>My scene uses orbit controls.</label> <br></br>
+    <label>Left click and drag to rotate the camera view, 
+      or right click and drag to pan the view. Also use the scroll wheel to zoom.</label> <br></br><br></br>
+    <label>Use the fov, near, and far sliders on the controls interface to edit camera controls.</label> <br></br>
+    <label>Use the d_color color wheel and its associated intensity and x y z values underneath it to change parameters for the global directional lighting.</label> <br></br>
+    <label>Use the h_skyColor, h_groundColor, and their associated intensity value to change the parameters for the global hemisphere lighting.</label> <br></br>
+    <label>Use the two p_color color wheels and intensity sliders to change the parameters for the local point lights.</label> <br></br>
+    <label>Look inside the castle walls to find a little guy enjoying his life. :3</label>
+</body>
+
+</html>
