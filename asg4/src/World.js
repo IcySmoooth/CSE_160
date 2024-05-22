@@ -110,6 +110,7 @@ let shapeColor = [1.0, 1.0, 1.0, 1.0];
 let shapeSize = 5;
 
 // Lighting variables
+let lightAnimation = true;
 let g_normalOn = false;
 let g_LightOn = true;
 let g_lightPos = [0, 1, 2];
@@ -376,6 +377,9 @@ function addActionsForHtmlUI() {
     document.getElementById("lightOn").onclick = function() { g_LightOn = true; };
     document.getElementById("lightOff").onclick = function() { g_LightOn = false; };
 
+    document.getElementById("lightAnimateOn").onclick = function() { lightAnimation = true; };
+    document.getElementById("lightAnimateOff").onclick = function() { lightAnimation = false; };
+
     document.getElementById("lightSlideX").addEventListener('mousemove', function(ev){ if (ev.buttons == 1) {g_lightPos[0] = this.value/100; renderAllShapes()} });
     document.getElementById("lightSlideY").addEventListener('mousemove', function(ev){ if (ev.buttons == 1) {g_lightPos[1] = this.value/100; renderAllShapes()} });
     document.getElementById("lightSlideZ").addEventListener('mousemove', function(ev){ if (ev.buttons == 1) {g_lightPos[2] = this.value/100; renderAllShapes()} });
@@ -437,6 +441,12 @@ function updateAnimationAngles() {
         g_body3Angle = (10*Math.cos(g_seconds - delayFactor*3));
 
         g_finAngle = (10*Math.cos(g_seconds - delayFactor*2));
+    }
+}
+
+function updateLightPosition() {
+    if (lightAnimation) {
+        g_lightPos[0] = 2.5*cos(g_seconds);
     }
 }
 
@@ -644,6 +654,7 @@ var g_seconds = performance.now()/1000.0-g_startTime;
 
 function tick() {
     g_seconds = performance.now()/1000.0-g_startTime;
+    updateLightPosition();
     updateAnimationAngles();
     renderAllShapes();
 
