@@ -72,7 +72,7 @@ let FSHADER_SOURCE = `
         //vec3 diffuse = vec3(gl_FragColor) * nDotL * 0.7 * u_LightColor;
         //vec3 ambient = vec3(gl_FragColor) * 0.3 * u_LightColor;
         float diffAmbCoefficient = 0.42857;
-        vec3 diffuse = vec3(gl_FragColor) * nDotL *(u_LightIntensity) * u_LightColor;
+        vec3 diffuse = vec3(gl_FragColor) * nDotL *(u_LightIntensity);
         vec3 ambient = vec3(gl_FragColor) * (u_LightIntensity * diffAmbCoefficient) * u_LightColor;
 
         if (u_LightOn) {
