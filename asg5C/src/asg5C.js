@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OBJLoader } from 'obj';
 import { OrbitControls } from 'orbit';
 import { GUI } from 'gui';
+import ThreeMeshUI from 'three-mesh-ui';
 
 // Settings Globals
 var fov = 45;
@@ -18,15 +19,22 @@ const TITLE_SCENE = 0;
 var titleScene;
 var scene;
 
+// UI Canvases
+var titleContainer;
+
+// Boolean flags
+let inTitleScreen = true;
+let inHintScreen, inSelectingScreen, inBattleScreen, inResultsScreen = false;
+
 var titleSceneElements = {
   "kingA": [],
   "pawnsA": [],
   "knightsA": [],
-  "rooksA": [],
+  "bishopsA": [],
   "kingB": [],
   "pawnsB": [],
   "knightsB": [],
-  "rooksB": []
+  "bishopsB": []
 }
 
 // Classes
@@ -53,11 +61,15 @@ function loadTextures() {
   toyWoodBlockTextureInfo = new LoadedTextureInfo(_toyWoodBlockLoader, _toyWoodBlockTexture);
 }
 
+function deg2Rad(degree) {
+  return degree * (Math.PI / 180);
+}
+
 function main() {
   const canvas = document.querySelector('#c');
   const renderer = new THREE.WebGLRenderer({antialias: true, canvas});
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(devicePixelRatio);
+  renderer.setSize(window.innerWidth/2, window.innerHeight/2);
+  renderer.setPixelRatio(window.devicePixelRatio);
 
   objLoader = new OBJLoader();
 
@@ -66,9 +78,10 @@ function main() {
 
   // Create a camera
   const camera = createCamera();
-  camera.position.x = 5;
-  camera.position.y = 0;
+  camera.position.x = 0.5;
+  camera.position.y = 1;
   camera.position.z = 25;
+  camera.rotateX(deg2Rad(5));
 
   // Create audio
   const listener = new THREE.AudioListener();
@@ -111,51 +124,11 @@ function main() {
     });
   }
 
-  class MinMaxGUIHelper {
-    constructor(obj, minProp, maxProp, minDif) {
-      this.obj = obj;
-      this.minProp = minProp;
-      this.maxProp = maxProp;
-      this.minDif = minDif;
-    }
-    get min() {
-      return this.obj[this.minProp];
-    }
-    set min(v) {
-      this.obj[this.minProp] = v;
-      this.obj[this.maxProp] = Math.max(this.obj[this.maxProp], v + this.minDif);
-    }
-    get max() {
-      return this.obj[this.maxProp];
-    }
-    set max(v) {
-      this.obj[this.maxProp] = v;
-      this.min = this.min;  // this will call the min setter
-    }
-  }
-
-  class ColorGUIHelper {
-    constructor(object, prop) {
-      this.object = object;
-      this.prop = prop;
-    }
-    get value() {
-      return `#${this.object[this.prop].getHexString()}`;
-    }
-    set value(hexString) {
-      this.object[this.prop].set(hexString);
-    }
-  }
-
   function getRandomInt(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
-
-  function updateCamera() {
-  	camera.updateProjectionMatrix();
-	}
 
   // Create scene
   const titleScene = new THREE.Scene();
@@ -177,7 +150,7 @@ function main() {
         kingA.rotateX(-90 * (Math.PI / 180));
   
         titleScene.add(kingA);
-        titleSceneElements["kingA"] = kingA;
+        titleSceneElements["kingA"].push(kingA);
       });
     });
 
@@ -195,7 +168,7 @@ function main() {
         kingB.rotateX(-90 * (Math.PI / 180));
     
         titleScene.add(kingB);
-        titleSceneElements["kingB"] = kingB;
+        titleSceneElements["kingB"].push(kingB);
       });
     });
 
@@ -214,7 +187,7 @@ function main() {
         pawnA.rotateX(-90 * (Math.PI / 180));
     
         titleScene.add(pawnA);
-        titleSceneElements["pawnsA"] = pawnA;
+        titleSceneElements["pawnsA"].push(pawnA);
       });
     });
 
@@ -232,7 +205,7 @@ function main() {
         pawnA.rotateX(-90 * (Math.PI / 180));
     
         titleScene.add(pawnA);
-        titleSceneElements["pawnsA"] = pawnA;
+        titleSceneElements["pawnsA"].push(pawnA);
       });
     });
 
@@ -250,7 +223,7 @@ function main() {
         pawnA.rotateX(-90 * (Math.PI / 180));
     
         titleScene.add(pawnA);
-        titleSceneElements["pawnsA"] = pawnA;
+        titleSceneElements["pawnsA"].push(pawnA);
       });
     });
 
@@ -269,7 +242,7 @@ function main() {
         pawnB.rotateX(-90 * (Math.PI / 180));
     
         titleScene.add(pawnB);
-        titleSceneElements["pawnsB"] = pawnB;
+        titleSceneElements["pawnsB"].push(pawnB);
       });
     });
 
@@ -287,7 +260,7 @@ function main() {
         pawnB.rotateX(-90 * (Math.PI / 180));
     
         titleScene.add(pawnB);
-        titleSceneElements["pawnsB"] = pawnB;
+        titleSceneElements["pawnsB"].push(pawnB);
       });
     });
 
@@ -305,12 +278,290 @@ function main() {
         pawnB.rotateX(-90 * (Math.PI / 180));
     
         titleScene.add(pawnB);
-        titleSceneElements["pawnsB"] = pawnB;
+        titleSceneElements["pawnsB"].push(pawnB);
+      });
+    });
+
+    // ################# Add White Knights ###################
+    objLoader.load('../models/pieces/Knight_A_Model.obj', (knightA) => {
+      const textureLoader = new THREE.TextureLoader();
+    
+      textureLoader.load('../img/pieces/Knight_A_Diffuse.jpg', (texture) => {
+        // Map texture to the object
+        knightA.traverse((child) => {
+          if (child instanceof THREE.Mesh) { child.material.map = texture; }
+        });
+  
+        knightA.scale.setScalar(0.15);
+        knightA.rotateX(-90 * (Math.PI / 180));
+        knightA.rotateZ(180 * (Math.PI / 180));
+        knightA.position.set(.5, 9, 7);
+    
+        titleScene.add(knightA);
+        titleSceneElements["knightsA"].push(knightA);
+      });
+    });
+
+    objLoader.load('../models/pieces/Knight_A_Model.obj', (knightA) => {
+      const textureLoader = new THREE.TextureLoader();
+    
+      textureLoader.load('../img/pieces/Knight_A_Diffuse.jpg', (texture) => {
+        // Map texture to the object
+        knightA.traverse((child) => {
+          if (child instanceof THREE.Mesh) { child.material.map = texture; }
+        });
+  
+        knightA.scale.setScalar(0.15);
+        knightA.rotateX(-90 * (Math.PI / 180));
+        knightA.rotateZ(180 * (Math.PI / 180));
+        knightA.position.set(1.5, 9, 6);
+    
+        titleScene.add(knightA);
+        titleSceneElements["knightsA"].push(knightA);
+      });
+    });
+
+    objLoader.load('../models/pieces/Knight_A_Model.obj', (knightA) => {
+      const textureLoader = new THREE.TextureLoader();
+    
+      textureLoader.load('../img/pieces/Knight_A_Diffuse.jpg', (texture) => {
+        // Map texture to the object
+        knightA.traverse((child) => {
+          if (child instanceof THREE.Mesh) { child.material.map = texture; }
+        });
+  
+        knightA.scale.setScalar(0.15);
+        knightA.rotateX(-90 * (Math.PI / 180));
+        knightA.rotateZ(180 * (Math.PI / 180));
+        knightA.position.set(-.5, 9, 6);
+    
+        titleScene.add(knightA);
+        titleSceneElements["knightsA"].push(knightA);
+      });
+    });
+
+    // ################# Add Black Knights ###################
+    objLoader.load('../models/pieces/Knight_B_Model.obj', (knightB) => {
+      const textureLoader = new THREE.TextureLoader();
+    
+      textureLoader.load('../img/pieces/Knight_B_Diffuse.jpg', (texture) => {
+        // Map texture to the object
+        knightB.traverse((child) => {
+          if (child instanceof THREE.Mesh) { child.material.map = texture; }
+        });
+  
+        knightB.scale.setScalar(0.15);
+        knightB.rotateX(-90 * (Math.PI / 180));
+        knightB.rotateZ(180 * (Math.PI / 180));
+        knightB.position.set(4.5, -1, 16);
+    
+        titleScene.add(knightB);
+        titleSceneElements["knightsB"].push(knightB);
+      });
+    });
+
+    objLoader.load('../models/pieces/Knight_B_Model.obj', (knightB) => {
+      const textureLoader = new THREE.TextureLoader();
+    
+      textureLoader.load('../img/pieces/Knight_B_Diffuse.jpg', (texture) => {
+        // Map texture to the object
+        knightB.traverse((child) => {
+          if (child instanceof THREE.Mesh) { child.material.map = texture; }
+        });
+  
+        knightB.scale.setScalar(0.15);
+        knightB.rotateX(-90 * (Math.PI / 180));
+        knightB.rotateZ(180 * (Math.PI / 180));
+        knightB.position.set(5.5, -1, 17);
+    
+        titleScene.add(knightB);
+        titleSceneElements["knightsB"].push(knightB);
+      });
+    });
+
+    objLoader.load('../models/pieces/Knight_B_Model.obj', (knightB) => {
+      const textureLoader = new THREE.TextureLoader();
+    
+      textureLoader.load('../img/pieces/Knight_B_Diffuse.jpg', (texture) => {
+        // Map texture to the object
+        knightB.traverse((child) => {
+          if (child instanceof THREE.Mesh) { child.material.map = texture; }
+        });
+  
+        knightB.scale.setScalar(0.15);
+        knightB.rotateX(-90 * (Math.PI / 180));
+        knightB.rotateZ(180 * (Math.PI / 180));
+        knightB.position.set(3.5, -1, 17);
+    
+        titleScene.add(knightB);
+        titleSceneElements["knightsB"].push(knightB);
+      });
+    });
+
+    // ################# Add White Bishops ###################
+    objLoader.load('../models/pieces/Bishop_A_Model.obj', (bishopA) => {
+      const textureLoader = new THREE.TextureLoader();
+    
+      textureLoader.load('../img/pieces/Bishop_A_Diffuse.jpg', (texture) => {
+        // Map texture to the object
+        bishopA.traverse((child) => {
+          if (child instanceof THREE.Mesh) { child.material.map = texture; }
+        });
+  
+        bishopA.scale.setScalar(0.15);
+        bishopA.rotateX(-90 * (Math.PI / 180));
+        bishopA.rotateZ(180 * (Math.PI / 180));
+        bishopA.position.set(-3, 9, 7);
+    
+        titleScene.add(bishopA);
+        titleSceneElements["bishopsA"].push(bishopA);
+      });
+    });
+
+    objLoader.load('../models/pieces/Bishop_A_Model.obj', (bishopA) => {
+      const textureLoader = new THREE.TextureLoader();
+    
+      textureLoader.load('../img/pieces/Bishop_A_Diffuse.jpg', (texture) => {
+        // Map texture to the object
+        bishopA.traverse((child) => {
+          if (child instanceof THREE.Mesh) { child.material.map = texture; }
+        });
+  
+        bishopA.scale.setScalar(0.15);
+        bishopA.rotateX(-90 * (Math.PI / 180));
+        bishopA.rotateZ(180 * (Math.PI / 180));
+        bishopA.position.set(-2, 9, 6);
+    
+        titleScene.add(bishopA);
+        titleSceneElements["bishopsA"].push(bishopA);
+      });
+    });
+
+    objLoader.load('../models/pieces/Bishop_A_Model.obj', (bishopA) => {
+      const textureLoader = new THREE.TextureLoader();
+    
+      textureLoader.load('../img/pieces/Bishop_A_Diffuse.jpg', (texture) => {
+        // Map texture to the object
+        bishopA.traverse((child) => {
+          if (child instanceof THREE.Mesh) { child.material.map = texture; }
+        });
+  
+        bishopA.scale.setScalar(0.15);
+        bishopA.rotateX(-90 * (Math.PI / 180));
+        bishopA.rotateZ(180 * (Math.PI / 180));
+        bishopA.position.set(-4, 9, 6);
+    
+        titleScene.add(bishopA);
+        titleSceneElements["bishopsA"].push(bishopA);
+      });
+    });
+
+    // ################# Add Black Bishops ###################
+    objLoader.load('../models/pieces/Bishop_B_Model.obj', (bishopB) => {
+      const textureLoader = new THREE.TextureLoader();
+    
+      textureLoader.load('../img/pieces/Bishop_B_Diffuse.jpg', (texture) => {
+        // Map texture to the object
+        bishopB.traverse((child) => {
+          if (child instanceof THREE.Mesh) { child.material.map = texture; }
+        });
+  
+        bishopB.scale.setScalar(0.15);
+        bishopB.rotateX(-90 * (Math.PI / 180));
+        bishopB.rotateZ(180 * (Math.PI / 180));
+        bishopB.position.set(-1, -1, 16);
+    
+        titleScene.add(bishopB);
+        titleSceneElements["bishopsB"].push(bishopB);
+      });
+    });
+
+    objLoader.load('../models/pieces/Bishop_B_Model.obj', (bishopB) => {
+      const textureLoader = new THREE.TextureLoader();
+    
+      textureLoader.load('../img/pieces/Bishop_B_Diffuse.jpg', (texture) => {
+        // Map texture to the object
+        bishopB.traverse((child) => {
+          if (child instanceof THREE.Mesh) { child.material.map = texture; }
+        });
+  
+        bishopB.scale.setScalar(0.15);
+        bishopB.rotateX(-90 * (Math.PI / 180));
+        bishopB.rotateZ(180 * (Math.PI / 180));
+        bishopB.position.set(0, -1, 17);
+    
+        titleScene.add(bishopB);
+        titleSceneElements["bishopsB"].push(bishopB);
+      });
+    });
+
+    objLoader.load('../models/pieces/Bishop_B_Model.obj', (bishopB) => {
+      const textureLoader = new THREE.TextureLoader();
+    
+      textureLoader.load('../img/pieces/Bishop_B_Diffuse.jpg', (texture) => {
+        // Map texture to the object
+        bishopB.traverse((child) => {
+          if (child instanceof THREE.Mesh) { child.material.map = texture; }
+        });
+  
+        bishopB.scale.setScalar(0.15);
+        bishopB.rotateX(-90 * (Math.PI / 180));
+        bishopB.rotateZ(180 * (Math.PI / 180));
+        bishopB.position.set(-2, -1, 17);
+    
+        titleScene.add(bishopB);
+        titleSceneElements["bishopsB"].push(bishopB);
       });
     });
   }
 
+  function initializeCanvasText() {
+    titleContainer = new ThreeMeshUI.Block({
+      width: 0.1,
+      height: 0.03,
+      padding: 0.005,
+      fontFamily: '../lib/assets/Roboto-msdf.json',
+      fontTexture: '../lib/assets/Roboto-msdf.png',
+    });
+     
+    //
+     
+    const titleText = new ThreeMeshUI.Text({
+      content: "King's Gambit\n",
+      fontSize: 0.008
+    });
+
+    const titleInstructionText = new ThreeMeshUI.Text({
+      content: "Press Space to Start",
+      fontSize: 0.0045
+    });
+     
+    titleContainer.add( titleText, titleInstructionText );
+
+    // Calculate the position in front of the camera
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+
+    const cameraPosition = camera.position.clone();
+    const targetPosition = cameraPosition.add(cameraDirection.multiplyScalar(near*1.5));
+
+    // Calculate the upward offset
+    const upOffset = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+    camera.getWorldDirection(upOffset);
+    upOffset.set(camera.up.x, camera.up.y, camera.up.z);
+    targetPosition.add(upOffset.multiplyScalar(0.01));
+
+    titleContainer.position.copy(targetPosition);
+
+    // Make the container face the camera
+    titleContainer.lookAt(camera.position);
+
+    scene.add(titleContainer);
+  }
+
   initializeTitleScreen();
+  initializeCanvasText();
 
   // Define hemishpere lighting
   const skyColor = 0xB1E1FF;  // light blue
@@ -323,7 +574,7 @@ function main() {
 	const directionalColor = 0x6154c4;
 	const directionalIntensity = 1.5;
 	const directionalLight = new THREE.DirectionalLight( directionalColor, directionalIntensity );
-	directionalLight.position.set( - 1, 2, 4 );
+	directionalLight.position.set( -0.15, 2, 2.88 );
   directionalLight.target.position.set(-5, 0, 0);
 	scene.add( directionalLight );
   scene.add( directionalLight.target );
@@ -338,29 +589,6 @@ function main() {
   const pointLight2 = new THREE.PointLight(pointColor, pointIntensity);
   pointLight2.position.set(-2.5, 4.2, 5.5);
   scene.add(pointLight2);
-
-  /*
-	const gui = new GUI();
-	gui.add( camera, 'fov', 1, 180 ).onChange( updateCamera );
-	const minMaxGUIHelper = new MinMaxGUIHelper( camera, 'near', 'far', 0.1 );
-	gui.add( minMaxGUIHelper, 'min', 0.1, 50, 0.1 ).name( 'near' ).onChange( updateCamera );
-	gui.add( minMaxGUIHelper, 'max', 0.1, 50, 0.1 ).name( 'far' ).onChange( updateCamera );
-  gui.addColor(new ColorGUIHelper(directionalLight, 'color'), 'value').name('d_color');
-  gui.add(directionalLight, 'intensity', 0, 2, 0.01);
-  gui.add(directionalLight.target.position, 'x', -10, 10);
-  gui.add(directionalLight.target.position, 'z', -10, 10);
-  gui.add(directionalLight.target.position, 'y', 0, 10);
-  gui.addColor(new ColorGUIHelper(hemisphereLight, 'color'), 'value').name('h_skyColor');
-  gui.addColor(new ColorGUIHelper(hemisphereLight, 'groundColor'), 'value').name('h_groundColor');
-  //gui.add(hemisphereLight, 'intensity', 0, 2, 0.01);
-  gui.addColor(new ColorGUIHelper(pointLight1, 'color'), 'value').name('p_color1');
-  //gui.add(pointLight1, 'intensity', 0, 250, 0.01);
-  gui.addColor(new ColorGUIHelper(pointLight2, 'color'), 'value').name('p_color2');
-  //gui.add(pointLight2, 'intensity', 0, 250, 0.01); */
-
-	const controls = new OrbitControls( camera, canvas );
-	controls.target.set( 0, 5, 0 );
-	controls.update();
 
   // Load basic shape textures
   const loader = new THREE.TextureLoader();
@@ -384,22 +612,6 @@ function main() {
 
   // load custom 3d models models
   //const objLoader = new OBJLoader();
-  objLoader.load('../models/PenguinBaseMesh.obj', (penguin) => {
-    const penguinTextureLoader = new THREE.TextureLoader();
-
-    penguinTextureLoader.load('../models/PenguinDiffuseColor.png', (texture) => {
-      // Map texture to the object
-      penguin.traverse((child) => {
-        if (child instanceof THREE.Mesh) { child.material.map = texture; }
-      });
-
-      scene.add(penguin);
-      penguin.rotation.y = 5;
-      penguin.position.z += 0.5;
-      penguin.position.x -= 0.9;
-      penguin.position.y -= 0.9;
-    });
-  });
 
   // Create ground plane
   const groundPlaneSize = 70;
@@ -557,16 +769,33 @@ function main() {
   torch2.rotateX(15 * (Math.PI / 180));
   scene.add(torch2);
 
+  document.onkeydown = keydown;
+
   
 	function render(time) {
 
 		time *= 0.001; // convert time to seconds
 
+    ThreeMeshUI.update();
 		renderer.render(scene, camera);
 
 		requestAnimationFrame(render);
 
 	}
+
+  function keydown(ev) {
+    // 65 is A, 87 is W, 68 is D
+    if (ev.keyCode == 13) { // Enter key
+      if (inTitleScreen) {
+        console.log("Start game");
+        titleContainer.visible = false;
+        inTitleScreen = false;
+        inHintScreen = true;
+      }
+    }
+
+    requestAnimationFrame(render);
+  }
 
 	requestAnimationFrame(render);
 }
