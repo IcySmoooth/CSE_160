@@ -1,7 +1,5 @@
 import * as THREE from 'three';
 import { OBJLoader } from 'obj';
-import { OrbitControls } from 'orbit';
-import { GUI } from 'gui';
 import { Timer } from 'timer';
 import ThreeMeshUI from 'three-mesh-ui';
 
@@ -24,6 +22,9 @@ var enemyWins = 0;
 // Timer manager
 var timer;
 var timerTarget = 0; // In seconds
+
+var thunderTimer;
+var thunderTimerTarget = 0;
 
 // Timer sequencing flags
 var waitingToShowBattle = false;
@@ -106,10 +107,10 @@ var gamePieceStartingRotations = {
   "bishopsB": [[-90, 0, 180], [-90, 0, 180], [-90, 0, 180]]
 };
 
-var gamePieceWhiteBattlePositions = [];
-var gamePieceWhiteBattleRotations = [];
-var gamePieceBlackBattlePositions = [];
-var gamePieceBlackBattleRotations = [];
+var gamePieceWhiteBattlePositions = [[-0.5, -1, -10.5], [.3, -1, -11.5], [.3, -1, -9.5]];
+var gamePieceWhiteBattleRotations = [[-90, 0, 90], [-90, 0, 90], [-90, 0, 90]];
+var gamePieceBlackBattlePositions = [[1, -1, -7], [.4, -1, -8], [.4, -1, -6]];
+var gamePieceBlackBattleRotations = [[-90, 0, 90], [-90, 0, 90], [-90, 0, 90]];
 
 function createCamera() {
   return new THREE.PerspectiveCamera(fov, aspect, near, far);
@@ -138,6 +139,8 @@ function main() {
 
   // Create a timer
   timer = new Timer();
+  thunderTimer = new Timer();
+  thunderTimerTarget = getRandomInt(15, 25);
 
   // Create audio
   const listener = new THREE.AudioListener();
@@ -177,6 +180,52 @@ function main() {
       thunderSFX.setLoop( false );
       thunderSFX.setVolume( 0.5 );
       thunderSFX.play();
+    });
+  }
+
+  function playUIButtonSFX() {
+    var uiSFX = new THREE.Audio( listener );
+
+    audioLoader.load( '../audio/ui_button_press.mp3', function( buffer ) {
+      uiSFX.setBuffer( buffer );
+      uiSFX.setLoop( false );
+      uiSFX.setVolume( 0.5 );
+      uiSFX.play();
+    });
+  }
+
+  function playPieceRevealSFX() {
+    var uiSFX = new THREE.Audio( listener );
+
+    audioLoader.load( '../audio/piece_reveal.mp3', function( buffer ) {
+      uiSFX.setBuffer( buffer );
+      uiSFX.setLoop( false );
+      uiSFX.setVolume( 0.5 );
+      uiSFX.play();
+    });
+  }
+
+  function playResultsSFX(result) {
+    var uiSFX = new THREE.Audio( listener );
+    var sfxPath;
+
+    switch (result) {
+      case 0:
+        sfxPath = '../audio/player_win.ogg';
+        break;
+      case 1:
+        sfxPath = '../audio/player_lose.ogg';
+        break;
+      case 2:
+        sfxPath = '../audio/player_tie.ogg';
+        break;
+    }
+
+    audioLoader.load( sfxPath, function( buffer ) {
+      uiSFX.setBuffer( buffer );
+      uiSFX.setLoop( false );
+      uiSFX.setVolume( 0.5 );
+      uiSFX.play();
     });
   }
 
@@ -578,8 +627,20 @@ function main() {
     // set white pieces
     setObjectTransform(gamePieceObjects["kingA"][0], gamePieceStartingPositions["kingA"][0], gamePieceStartingRotations["kingA"][0]);
 
+    for (var i=0; i < gamePieceObjects['pawnsA'].length; i++) {
+      setObjectTransform(gamePieceObjects['pawnsA'][i], gamePieceStartingPositions["pawnsA"][i], gamePieceStartingRotations["pawnsA"][i]);
+      setObjectTransform(gamePieceObjects['bishopsA'][i], gamePieceStartingPositions["bishopsA"][i], gamePieceStartingRotations["bishopsA"][i]);
+      setObjectTransform(gamePieceObjects['knightsA'][i], gamePieceStartingPositions["knightsA"][i], gamePieceStartingRotations["knightsA"][i]);
+    }
+
     // Set black pieces
     setObjectTransform(gamePieceObjects["kingB"][0], gamePieceStartingPositions["kingB"][0], gamePieceStartingRotations["kingB"][0]);
+
+    for (var i=0; i < gamePieceObjects['pawnsB'].length; i++) {
+      setObjectTransform(gamePieceObjects['pawnsB'][i], gamePieceStartingPositions["pawnsB"][i], gamePieceStartingRotations["pawnsB"][i]);
+      setObjectTransform(gamePieceObjects['bishopsB'][i], gamePieceStartingPositions["bishopsB"][i], gamePieceStartingRotations["bishopsB"][i]);
+      setObjectTransform(gamePieceObjects['knightsB'][i], gamePieceStartingPositions["knightsB"][i], gamePieceStartingRotations["knightsB"][i]);
+    }
   }
 
   function initializeCanvasText() {
@@ -1020,6 +1081,14 @@ function main() {
       }
     }
 
+    thunderTimer.update();
+    if (thunderTimer.getElapsed() >= thunderTimerTarget) {
+      thunderTimer._elapsed = 0;
+      thunderTimerTarget = getRandomInt(15, 25);
+
+      playThunderClapSFX();
+    }
+
     ThreeMeshUI.update();
 		renderer.render(scene, camera);
 
@@ -1034,6 +1103,8 @@ function main() {
         titleContainer.visible = false;
         hintContainer.visible = true;
 
+        playUIButtonSFX();
+
         inTitleScreen = false;
         inHintScreen = true;
       }
@@ -1042,6 +1113,8 @@ function main() {
         hintContainer.visible = false;
         selectControlsContainer.visible = true;
         typeChartCanvas.visible = true;
+
+        playUIButtonSFX();
 
         inHintScreen = false;
         inSelectingScreen = true;
@@ -1054,8 +1127,11 @@ function main() {
         playerWinsContainer.visible = false;
         enemyWinsContainer.visible = false;
         retryContainer.visible = false;
+        resultsContainer.visible = false;
         selectControlsContainer.visible = true;
         typeChartCanvas.visible = true;
+
+        playUIButtonSFX();
 
         inResultsScreen = false;
         inSelectingScreen = true;
@@ -1070,6 +1146,8 @@ function main() {
         // Properly assign AI Management variables
         playerSelectedTroop = 0;
         enemySelectedTroop = getRandomInt(0, 2);
+
+        playUIButtonSFX();
 
         inSelectingScreen = false;
         inBattleScreen = true;
@@ -1089,6 +1167,8 @@ function main() {
         playerSelectedTroop = 1;
         enemySelectedTroop = getRandomInt(0, 2);
 
+        playUIButtonSFX();
+
         inSelectingScreen = false;
         inBattleScreen = true;
 
@@ -1106,6 +1186,8 @@ function main() {
         // Properly assign AI Management variables
         playerSelectedTroop = 2;
         enemySelectedTroop = getRandomInt(0, 2);
+
+        playUIButtonSFX();
 
         inSelectingScreen = false;
         inBattleScreen = true;
@@ -1142,7 +1224,31 @@ function main() {
       // Show which troop the player selected
       playerTroopCanvas.visible = true;
 
-      startTimer(1);
+      // Spawn appropriate pieces to their places
+      switch (playerSelectedTroop) {
+        case 0:
+          for (let i=0; i < gamePieceObjects['pawnsB'].length; i++) {
+            let pawn = gamePieceObjects['pawnsB'][i];
+            setObjectTransform(pawn, gamePieceBlackBattlePositions[i], gamePieceBlackBattleRotations[i]);
+          }
+          break;
+        case 1:
+          for (let i=0; i < gamePieceObjects['bishopsB'].length; i++) {
+            let bishop = gamePieceObjects['bishopsB'][i];
+            setObjectTransform(bishop, gamePieceBlackBattlePositions[i], gamePieceBlackBattleRotations[i]);
+          }
+          break;
+        case 2:
+          for (let i=0; i < gamePieceObjects['knightsB'].length; i++) {
+            let knight = gamePieceObjects['knightsB'][i];
+            setObjectTransform(knight, gamePieceBlackBattlePositions[i], gamePieceBlackBattleRotations[i]);
+          }
+          break;
+      }
+
+      playPieceRevealSFX();
+
+      startTimer(1.2);
     }
 
     else if (waitingToShowEnemyTroops) {
@@ -1151,7 +1257,51 @@ function main() {
 
       enemyTroopCanvas.visible = true;
 
-      startTimer(1);
+      // Spawn appropriate pieces to their places
+      switch (enemySelectedTroop) {
+        case 0:
+          for (let i=0; i < gamePieceObjects['pawnsA'].length; i++) {
+            let pawn = gamePieceObjects['pawnsA'][i];
+            setObjectTransform(pawn, gamePieceWhiteBattlePositions[i], gamePieceWhiteBattleRotations[i]);
+          }
+          break;
+        case 1:
+          for (let i=0; i < gamePieceObjects['bishopsA'].length; i++) {
+            let bishop = gamePieceObjects['bishopsA'][i];
+            setObjectTransform(bishop, gamePieceWhiteBattlePositions[i], gamePieceWhiteBattleRotations[i]);
+          }
+          break;
+        case 2:
+          for (let i=0; i < gamePieceObjects['knightsA'].length; i++) {
+            let knight = gamePieceObjects['knightsA'][i];
+            setObjectTransform(knight, gamePieceWhiteBattlePositions[i], gamePieceWhiteBattleRotations[i]);
+          }
+          break;
+      }
+
+      playPieceRevealSFX();
+
+      startTimer(1.5);
+    }
+
+    else if (waitingToUnleashTroops) {
+      waitingToUnleashTroops = false;
+      waitingToShowResults = true;
+
+      startTimer(0.8);
+    }
+
+    else if (waitingToShowResults) {
+      waitingToShowResults = false;
+
+      playerTroopCanvas.visible = false;
+      enemyTroopCanvas.visible = false;
+
+      setPiecesToStartingPosition();
+
+      inBattleScreen = false;
+      inResultsScreen = true;
+      showResults();
     }
   }
 
@@ -1191,12 +1341,6 @@ function main() {
 
     waitingToShowPlayerTroops = true;
     startTimer(1);
-
-    // Queue up the next animations
-
-    //inBattleScreen = false;
-    //inResultsScreen = true;
-    //showResults();
   }
 
   function showResults() {
@@ -1213,6 +1357,8 @@ function main() {
         resultsText.set( {content: "TIE" } );
         break;
     }
+
+    playResultsSFX(getBattleResult());
 
     resultsContainer.visible = true;
     setUICanvasToCameraPosition(resultsContainer, 0.05);
