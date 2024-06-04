@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OBJLoader } from 'obj';
 import { OrbitControls } from 'orbit';
 import { GUI } from 'gui';
+import { Timer } from 'timer';
 import ThreeMeshUI from 'three-mesh-ui';
 
 // Settings Globals
@@ -12,7 +13,6 @@ var far = 200;
 
 // Loaded Textures
 var objLoader;
-var toyWoodBlockTextureInfo;
 
 // AI Manager
 var playerSelectedTroop = 0;
@@ -21,9 +21,18 @@ var enemySelectedTroop = 0; // Pawn = 0, bishop = 1, knight = 2
 var playerWins = 0;
 var enemyWins = 0;
 
+// Timer manager
+var timer;
+var timerTarget = 0; // In seconds
+
+// Timer sequencing flags
+var waitingToShowBattle = false;
+var waitingToShowPlayerTroops = false;
+var waitingToShowEnemyTroops = false;
+var waitingToUnleashTroops = false;
+var waitingToShowResults = false;
+
 // Scenes
-const TITLE_SCENE = 0;
-var titleScene;
 var scene;
 
 // Camera positions
@@ -41,6 +50,13 @@ var typeChartCanvas;
 var retryContainer;
 var resultsContainer;
 var resultsText;
+
+var playerTroopCanvas;
+var enemyTroopCanvas;
+
+var pawnMaterial;
+var bishopMaterial;
+var knightMaterial;
 
 var playerWinsContainer;
 var enemyWinsContainer;
@@ -90,13 +106,10 @@ var gamePieceStartingRotations = {
   "bishopsB": [[-90, 0, 180], [-90, 0, 180], [-90, 0, 180]]
 };
 
-// Classes
-class LoadedTextureInfo {
-  constructor(loader, texture) {
-    this.loader = loader;
-    this.texture = texture;
-  }
-} 
+var gamePieceWhiteBattlePositions = [];
+var gamePieceWhiteBattleRotations = [];
+var gamePieceBlackBattlePositions = [];
+var gamePieceBlackBattleRotations = [];
 
 function createCamera() {
   return new THREE.PerspectiveCamera(fov, aspect, near, far);
@@ -105,18 +118,6 @@ function createCamera() {
 function setObjectTransform(object, position, rotation) {
   object.position.set(position[0], position[1], position[2]);
   object.rotation.set(deg2Rad(rotation[0]), deg2Rad(rotation[1]), deg2Rad(rotation[2]));
-}
-
-function loadTextures() {
-  // Toy wood texture
-  let _toyWoodBlockLoader = new THREE.TextureLoader();
-  let _toyWoodBlockTexture = _toyWoodBlockLoader.load('../img/toy_wood_block.jpg', function(_toyWoodBlockTexture) {
-    _toyWoodBlockTexture.wrapS = THREE.RepeatWrapping;
-    _toyWoodBlockTexture.wrapT = THREE.RepeatWrapping;
-    _toyWoodBlockTexture.repeat.set(2, 2); // Repeat the texture 2 times in both directions
-  });
-  _toyWoodBlockTexture.colorSpace = THREE.SRGBColorSpace;
-  toyWoodBlockTextureInfo = new LoadedTextureInfo(_toyWoodBlockLoader, _toyWoodBlockTexture);
 }
 
 function deg2Rad(degree) {
@@ -131,12 +132,12 @@ function main() {
 
   objLoader = new OBJLoader();
 
-  // Initialize assets
-  loadTextures();
-
   // Create a camera
   const camera = createCamera();
   setObjectTransform(camera, startingCameraPos, startingCameraRot);
+
+  // Create a timer
+  timer = new Timer();
 
   // Create audio
   const listener = new THREE.AudioListener();
@@ -682,6 +683,25 @@ function main() {
     scene.add( typeChartCanvas );
     setUICanvasToCameraPosition(typeChartCanvas, 0.02);
 
+
+    var pawnTexture = loader.load( '../img/pawn_icon.png' );
+    var bishopTexture = loader.load( '../img/bishop_icon.png' );
+    var knightTexture = loader.load( '../img/knight_icon.png' );
+
+    pawnMaterial = new THREE.MeshBasicMaterial( { map: pawnTexture ,opacity: 1, transparent: true } );
+    bishopMaterial = new THREE.MeshBasicMaterial( { map: bishopTexture ,opacity: 1, transparent: true } );
+    knightMaterial = new THREE.MeshBasicMaterial( { map: knightTexture ,opacity: 1, transparent: true } );
+
+    var geometry = new THREE.PlaneGeometry();
+
+    playerTroopCanvas = new THREE.Mesh( geometry, pawnMaterial );
+    playerTroopCanvas.scale.setScalar(0.04);
+    scene.add( playerTroopCanvas );
+
+    enemyTroopCanvas = new THREE.Mesh( geometry, pawnMaterial );
+    enemyTroopCanvas.scale.setScalar(0.04);
+    scene.add( enemyTroopCanvas );
+
     resultsContainer = new ThreeMeshUI.Block({
       width: 0.1,
       height: 0.013,
@@ -772,6 +792,8 @@ function main() {
     enemyWinsContainer.visible = false;
     retryContainer.visible = false;
     resultsContainer.visible = false;
+    playerTroopCanvas.visible = false;
+    enemyTroopCanvas.visible = false;
   }
 
   initializeTitleScreen();
@@ -806,8 +828,6 @@ function main() {
 
   // Load basic shape textures
   const loader = new THREE.TextureLoader();
-  const texture = loader.load( '../img/wall.jpg' );
-  texture.colorSpace = THREE.SRGBColorSpace;
 
   // load skybox
   const skyLoader = new THREE.TextureLoader();
@@ -990,6 +1010,16 @@ function main() {
 
 		time *= 0.001; // convert time to seconds
 
+    // Only update timer if there is a valid timer target
+    //console.log(timer.getElapsed());
+    if (timerTarget > 0) {
+      timer.update();
+
+      if (timer.getElapsed() >= timerTarget) {
+        timerTimeout();
+      }
+    }
+
     ThreeMeshUI.update();
 		renderer.render(scene, camera);
 
@@ -1044,7 +1074,9 @@ function main() {
         inSelectingScreen = false;
         inBattleScreen = true;
 
-        showBattle();
+        waitingToShowBattle = true;
+        startTimer(1);
+        //showBattle();
       }
     }
 
@@ -1060,7 +1092,9 @@ function main() {
         inSelectingScreen = false;
         inBattleScreen = true;
 
-        showBattle();
+        waitingToShowBattle = true;
+        startTimer(1);
+        //showBattle();
       }
     }
 
@@ -1076,23 +1110,96 @@ function main() {
         inSelectingScreen = false;
         inBattleScreen = true;
 
-        showBattle();
+        waitingToShowBattle = true;
+        startTimer(1);
+        //showBattle();
       }
     }
 
     requestAnimationFrame(render);
   }
 
-  function showBattle() {
+  function startTimer(time) {
+    timerTarget = time;
+    timer.reset();
+  }
 
-    inBattleScreen = false;
-    inResultsScreen = true;
-    showResults();
+  function timerTimeout() {
+    timerTarget = 0;
+    timer._elapsed = 0;
+
+    if (waitingToShowBattle) {
+      waitingToShowBattle = false;
+      waitingToShowPlayerTroops = true;
+
+      showBattle();
+    }
+
+    else if (waitingToShowPlayerTroops) {
+      waitingToShowPlayerTroops = false;
+      waitingToShowEnemyTroops = true;
+
+      // Show which troop the player selected
+      playerTroopCanvas.visible = true;
+
+      startTimer(1);
+    }
+
+    else if (waitingToShowEnemyTroops) {
+      waitingToShowEnemyTroops = false;
+      waitingToUnleashTroops = true;
+
+      enemyTroopCanvas.visible = true;
+
+      startTimer(1);
+    }
+  }
+
+  function showBattle() {
+    setObjectTransform(camera, resultsCameraPos, resultsCameraRot);
+
+    setUICanvasToCameraPosition(playerTroopCanvas, 0.04);
+    playerTroopCanvas.position.x -= 0.055;
+    setUICanvasToCameraPosition(enemyTroopCanvas, 0.04);
+    enemyTroopCanvas.position.x += 0.055;
+
+    // Change player troop UI depending on what the player selected
+    switch (playerSelectedTroop) {
+      case 0:
+        playerTroopCanvas.material = pawnMaterial;
+        break;
+      case 1:
+        playerTroopCanvas.material = bishopMaterial;
+        break;
+      case 2:
+        playerTroopCanvas.material = knightMaterial;
+        break;
+    }
+
+    // Change enemy troop UI depending on what the enemy selected
+    switch (enemySelectedTroop) {
+      case 0:
+        enemyTroopCanvas.material = pawnMaterial;
+        break;
+      case 1:
+        enemyTroopCanvas.material = bishopMaterial;
+        break;
+      case 2:
+        enemyTroopCanvas.material = knightMaterial;
+        break;
+    }
+
+    waitingToShowPlayerTroops = true;
+    startTimer(1);
+
+    // Queue up the next animations
+
+    //inBattleScreen = false;
+    //inResultsScreen = true;
+    //showResults();
   }
 
   function showResults() {
-    setObjectTransform(camera, resultsCameraPos, resultsCameraRot);
-
     switch (getBattleResult()) {
       case 0:
         playerWins += 1;
@@ -1129,8 +1236,6 @@ function main() {
     else {
       setObjectTransform(gamePieceObjects["kingB"][0], resultsKingPosLoss, resultsKingRotLoss);
     }
-    //console.log("Player's result: ", playerSelectedTroop);
-    //console.log("Enemy's result: ", enemySelectedTroop);
   }
 
 	requestAnimationFrame(render);
