@@ -39,6 +39,8 @@ var hintContainer;
 var selectControlsContainer;
 var typeChartCanvas;
 var retryContainer;
+var resultsContainer;
+var resultsText;
 
 var playerWinsContainer;
 var enemyWinsContainer;
@@ -50,10 +52,10 @@ let inTitleScreen = true;
 let inHintScreen, inSelectingScreen, inBattleScreen, inResultsScreen = false;
 
 // Piece positions
-var resultsKingPosWin = [0, 0, -6];
-var resultsKingPosLoss = [0, 0, -6];
-var resultsKingRotWin = [0, 0, 0];
-var resultsKingRotLoss = [0, 0, 0];
+var resultsKingPosWin = [-.3, -1, -7];
+var resultsKingPosLoss = [0.8, -3, -9];
+var resultsKingRotWin = [-90, 0, 0];
+var resultsKingRotLoss = [0, -135, 0];
 
 var gamePieceObjects = {
   "kingA": [],
@@ -573,10 +575,10 @@ function main() {
 
   function setPiecesToStartingPosition() {
     // set white pieces
-    setObjectTransform(gamePieceObjects["kingA"], gamePieceStartingPositions["kingA"], gamePieceStartingRotations["kingA"]);
+    setObjectTransform(gamePieceObjects["kingA"][0], gamePieceStartingPositions["kingA"][0], gamePieceStartingRotations["kingA"][0]);
 
     // Set black pieces
-    setObjectTransform(gamePieceObjects["kingB"], gamePieceStartingPositions["kingB"], gamePieceStartingRotations["kingB"]);
+    setObjectTransform(gamePieceObjects["kingB"][0], gamePieceStartingPositions["kingB"][0], gamePieceStartingRotations["kingB"][0]);
   }
 
   function initializeCanvasText() {
@@ -680,6 +682,22 @@ function main() {
     scene.add( typeChartCanvas );
     setUICanvasToCameraPosition(typeChartCanvas, 0.02);
 
+    resultsContainer = new ThreeMeshUI.Block({
+      width: 0.1,
+      height: 0.013,
+      padding: 0.0015,
+      interLine: 0.001,
+      fontFamily: '../lib/assets/Roboto-msdf.json',
+      fontTexture: '../lib/assets/Roboto-msdf.png',
+    });
+     
+    resultsText = new ThreeMeshUI.Text({
+      content: "You Win!",
+      fontSize: 0.009
+    });
+     
+    resultsContainer.add( resultsText );
+
     playerWinsContainer = new ThreeMeshUI.Block({
       width: 0.1,
       height: 0.02,
@@ -744,6 +762,7 @@ function main() {
     scene.add(playerWinsContainer);
     scene.add(enemyWinsContainer);
     scene.add(retryContainer);
+    scene.add(resultsContainer);
 
     // Hide unecessary ui
     hintContainer.visible = false;
@@ -752,6 +771,7 @@ function main() {
     playerWinsContainer.visible = false;
     enemyWinsContainer.visible = false;
     retryContainer.visible = false;
+    resultsContainer.visible = false;
   }
 
   initializeTitleScreen();
@@ -999,6 +1019,7 @@ function main() {
 
       else if (inResultsScreen) {
         setObjectTransform(camera, startingCameraPos, startingCameraRot);
+        setPiecesToStartingPosition();
 
         playerWinsContainer.visible = false;
         enemyWinsContainer.visible = false;
@@ -1075,32 +1096,38 @@ function main() {
     switch (getBattleResult()) {
       case 0:
         playerWins += 1;
+        resultsText.set( {content: "YOU WIN" } );
         break;
       case 1:
         enemyWins += 1;
+        resultsText.set( {content: "YOU LOSE" } );
         break;
       case 2:
+        resultsText.set( {content: "TIE" } );
         break;
     }
 
+    resultsContainer.visible = true;
+    setUICanvasToCameraPosition(resultsContainer, 0.05);
+
     playerWinsContainer.visible = true;
     playerWinsText.set( {content: playerWins.toString() } );
-    setUICanvasToCameraPosition(playerWinsContainer, 0.035);
+    setUICanvasToCameraPosition(playerWinsContainer, 0.03);
     playerWinsContainer.position.x -= 0.055;
 
     enemyWinsContainer.visible = true;
     enemyWinsText.set( {content: enemyWins.toString() } );
-    setUICanvasToCameraPosition(enemyWinsContainer, 0.035);
+    setUICanvasToCameraPosition(enemyWinsContainer, 0.03);
     enemyWinsContainer.position.x += 0.055;
 
     retryContainer.visible = true;
     setUICanvasToCameraPosition(retryContainer, -0.05);
 
     if (getBattleResult() == 0) {
-      //setObjectTransform(gamePieceObjects["kingB"], resultsKingPosWin, resultsKingRotWin);
+      setObjectTransform(gamePieceObjects["kingB"][0], resultsKingPosWin, resultsKingRotWin);
     }
     else {
-      //setObjectTransform(gamePieceObjects["kingB"], resultsKingPosLoss, resultsKingRotLoss);
+      setObjectTransform(gamePieceObjects["kingB"][0], resultsKingPosLoss, resultsKingRotLoss);
     }
     //console.log("Player's result: ", playerSelectedTroop);
     //console.log("Enemy's result: ", enemySelectedTroop);
