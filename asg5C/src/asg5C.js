@@ -14,19 +14,48 @@ var far = 200;
 var objLoader;
 var toyWoodBlockTextureInfo;
 
+// AI Manager
+var playerSelectedTroop = 0;
+var enemySelectedTroop = 0; // Pawn = 0, bishop = 1, knight = 2
+
+var playerWins = 0;
+var enemyWins = 0;
+
 // Scenes
 const TITLE_SCENE = 0;
 var titleScene;
 var scene;
 
+// Camera positions
+var startingCameraPos = [0.5, 1, 25];
+var startingCameraRot = [5, 0, 0];
+
+var resultsCameraPos = [0, 0, -4];
+var resultsCameraRot = [0, 0, 0];
+
 // UI Canvases
 var titleContainer;
+var hintContainer;
+var selectControlsContainer;
+var typeChartCanvas;
+var retryContainer;
+
+var playerWinsContainer;
+var enemyWinsContainer;
+var playerWinsText;
+var enemyWinsText;
 
 // Boolean flags
 let inTitleScreen = true;
 let inHintScreen, inSelectingScreen, inBattleScreen, inResultsScreen = false;
 
-var titleSceneElements = {
+// Piece positions
+var resultsKingPosWin = [0, 0, -6];
+var resultsKingPosLoss = [0, 0, -6];
+var resultsKingRotWin = [0, 0, 0];
+var resultsKingRotLoss = [0, 0, 0];
+
+var gamePieceObjects = {
   "kingA": [],
   "pawnsA": [],
   "knightsA": [],
@@ -35,7 +64,29 @@ var titleSceneElements = {
   "pawnsB": [],
   "knightsB": [],
   "bishopsB": []
-}
+};
+
+var gamePieceStartingPositions = {
+  "kingA": [[-.2, 9, 2]],
+  "pawnsA": [[2.5, -.8, 5], [1.5, -.8, 4], [3.5, -.8, 4]],
+  "knightsA": [[.5, 9, 7], [1.5, 9, 6], [-.5, 9, 6]],
+  "bishopsA": [[-3, 9, 7], [-2, 9, 6], [-4, 9, 6]],
+  "kingB": [[0, -1, 21]],
+  "pawnsB": [[-2.2, -1, 15], [-1.2, -1, 16], [-3.2, -1, 16]],
+  "knightsB": [[4.5, -1, 16], [5.5, -1, 17], [3.5, -1, 17]],
+  "bishopsB": [[-1, -1, 16], [0, -1, 17], [-2, -1, 17]]
+};
+
+var gamePieceStartingRotations = {
+  "kingA": [[-90, 0, 0]],
+  "pawnsA": [[-90, 0, 0], [-90, 0, 0], [-90, 0, 0]],
+  "knightsA": [[-90, 0, 180], [-90, 0, 180], [-90, 0, 180]],
+  "bishopsA": [[-90, 0, 180], [-90, 0, 180], [-90, 0, 180]],
+  "kingB": [[-90, 0, 0]],
+  "pawnsB": [[-90, 0, 0], [-90, 0, 0], [-90, 0, 0]],
+  "knightsB": [[-90, 0, 180], [-90, 0, 180], [-90, 0, 180]],
+  "bishopsB": [[-90, 0, 180], [-90, 0, 180], [-90, 0, 180]]
+};
 
 // Classes
 class LoadedTextureInfo {
@@ -47,6 +98,11 @@ class LoadedTextureInfo {
 
 function createCamera() {
   return new THREE.PerspectiveCamera(fov, aspect, near, far);
+}
+
+function setObjectTransform(object, position, rotation) {
+  object.position.set(position[0], position[1], position[2]);
+  object.rotation.set(deg2Rad(rotation[0]), deg2Rad(rotation[1]), deg2Rad(rotation[2]));
 }
 
 function loadTextures() {
@@ -78,10 +134,7 @@ function main() {
 
   // Create a camera
   const camera = createCamera();
-  camera.position.x = 0.5;
-  camera.position.y = 1;
-  camera.position.z = 25;
-  camera.rotateX(deg2Rad(5));
+  setObjectTransform(camera, startingCameraPos, startingCameraRot);
 
   // Create audio
   const listener = new THREE.AudioListener();
@@ -130,6 +183,41 @@ function main() {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 
+  function getBattleResult() {
+    if ((playerSelectedTroop == 0 && enemySelectedTroop == 1) || (playerSelectedTroop == 1 && enemySelectedTroop == 2) || (playerSelectedTroop == 2 && enemySelectedTroop == 0)) {
+      return 0; // player wins
+    }
+
+    else if ((playerSelectedTroop == 0 && enemySelectedTroop == 2) || (playerSelectedTroop == 1 && enemySelectedTroop == 0) || (playerSelectedTroop == 2 && enemySelectedTroop == 1)) {
+      return 1; // enemy wins
+    }
+
+    else {
+      return 2; // Tie
+    }
+  }
+
+  function setUICanvasToCameraPosition(container, offset) {
+    // Calculate the position in front of the camera
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+
+    const cameraPosition = camera.position.clone();
+    const targetPosition = cameraPosition.add(cameraDirection.multiplyScalar(near*1.5));
+
+    // Calculate the upward offset
+    const upOffset = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+    camera.getWorldDirection(upOffset);
+    upOffset.set(camera.up.x, camera.up.y, camera.up.z);
+    targetPosition.add(upOffset.multiplyScalar(offset));
+
+    container.position.copy(targetPosition);
+
+    // Make the container face the camera
+    container.lookAt(camera.position);
+  }
+
   // Create scene
   const titleScene = new THREE.Scene();
   scene = titleScene;
@@ -146,11 +234,10 @@ function main() {
         });
 
         kingA.scale.setScalar(0.15);
-        kingA.position.set(-.2, 9, 2);
-        kingA.rotateX(-90 * (Math.PI / 180));
+        setObjectTransform(kingA, gamePieceStartingPositions["kingA"][0], gamePieceStartingRotations["kingA"][0]);
   
         titleScene.add(kingA);
-        titleSceneElements["kingA"].push(kingA);
+        gamePieceObjects["kingA"].push(kingA);
       });
     });
 
@@ -164,11 +251,10 @@ function main() {
         });
   
         kingB.scale.setScalar(0.15);
-        kingB.position.set(0, -1, 21);
-        kingB.rotateX(-90 * (Math.PI / 180));
+        setObjectTransform(kingB, gamePieceStartingPositions["kingB"][0], gamePieceStartingRotations["kingB"][0]);
     
         titleScene.add(kingB);
-        titleSceneElements["kingB"].push(kingB);
+        gamePieceObjects["kingB"].push(kingB);
       });
     });
 
@@ -183,11 +269,10 @@ function main() {
         });
   
         pawnA.scale.setScalar(0.15);
-        pawnA.position.set(2.5, -.8, 5);
-        pawnA.rotateX(-90 * (Math.PI / 180));
+        setObjectTransform(pawnA, gamePieceStartingPositions["pawnsA"][0], gamePieceStartingRotations["pawnsA"][0]);
     
         titleScene.add(pawnA);
-        titleSceneElements["pawnsA"].push(pawnA);
+        gamePieceObjects["pawnsA"].push(pawnA);
       });
     });
 
@@ -201,11 +286,10 @@ function main() {
         });
   
         pawnA.scale.setScalar(0.15);
-        pawnA.position.set(1.5, -.8, 4);
-        pawnA.rotateX(-90 * (Math.PI / 180));
+        setObjectTransform(pawnA, gamePieceStartingPositions["pawnsA"][1], gamePieceStartingRotations["pawnsA"][1]);
     
         titleScene.add(pawnA);
-        titleSceneElements["pawnsA"].push(pawnA);
+        gamePieceObjects["pawnsA"].push(pawnA);
       });
     });
 
@@ -219,11 +303,10 @@ function main() {
         });
   
         pawnA.scale.setScalar(0.15);
-        pawnA.position.set(3.5, -.8, 4);
-        pawnA.rotateX(-90 * (Math.PI / 180));
+        setObjectTransform(pawnA, gamePieceStartingPositions["pawnsA"][2], gamePieceStartingRotations["pawnsA"][2]);
     
         titleScene.add(pawnA);
-        titleSceneElements["pawnsA"].push(pawnA);
+        gamePieceObjects["pawnsA"].push(pawnA);
       });
     });
 
@@ -238,11 +321,10 @@ function main() {
         });
   
         pawnB.scale.setScalar(0.15);
-        pawnB.position.set(-2.2, -1, 15);
-        pawnB.rotateX(-90 * (Math.PI / 180));
+        setObjectTransform(pawnB, gamePieceStartingPositions["pawnsB"][0], gamePieceStartingRotations["pawnsB"][0]);
     
         titleScene.add(pawnB);
-        titleSceneElements["pawnsB"].push(pawnB);
+        gamePieceObjects["pawnsB"].push(pawnB);
       });
     });
 
@@ -256,11 +338,10 @@ function main() {
         });
   
         pawnB.scale.setScalar(0.15);
-        pawnB.position.set(-1.2, -1, 16);
-        pawnB.rotateX(-90 * (Math.PI / 180));
+        setObjectTransform(pawnB, gamePieceStartingPositions["pawnsB"][1], gamePieceStartingRotations["pawnsB"][1]);
     
         titleScene.add(pawnB);
-        titleSceneElements["pawnsB"].push(pawnB);
+        gamePieceObjects["pawnsB"].push(pawnB);
       });
     });
 
@@ -274,11 +355,10 @@ function main() {
         });
   
         pawnB.scale.setScalar(0.15);
-        pawnB.position.set(-3.2, -1, 16);
-        pawnB.rotateX(-90 * (Math.PI / 180));
+        setObjectTransform(pawnB, gamePieceStartingPositions["pawnsB"][2], gamePieceStartingRotations["pawnsB"][2]);
     
         titleScene.add(pawnB);
-        titleSceneElements["pawnsB"].push(pawnB);
+        gamePieceObjects["pawnsB"].push(pawnB);
       });
     });
 
@@ -293,12 +373,10 @@ function main() {
         });
   
         knightA.scale.setScalar(0.15);
-        knightA.rotateX(-90 * (Math.PI / 180));
-        knightA.rotateZ(180 * (Math.PI / 180));
-        knightA.position.set(.5, 9, 7);
+        setObjectTransform(knightA, gamePieceStartingPositions["knightsA"][0], gamePieceStartingRotations["knightsA"][0]);
     
         titleScene.add(knightA);
-        titleSceneElements["knightsA"].push(knightA);
+        gamePieceObjects["knightsA"].push(knightA);
       });
     });
 
@@ -312,12 +390,10 @@ function main() {
         });
   
         knightA.scale.setScalar(0.15);
-        knightA.rotateX(-90 * (Math.PI / 180));
-        knightA.rotateZ(180 * (Math.PI / 180));
-        knightA.position.set(1.5, 9, 6);
+        setObjectTransform(knightA, gamePieceStartingPositions["knightsA"][1], gamePieceStartingRotations["knightsA"][1]);
     
         titleScene.add(knightA);
-        titleSceneElements["knightsA"].push(knightA);
+        gamePieceObjects["knightsA"].push(knightA);
       });
     });
 
@@ -331,12 +407,10 @@ function main() {
         });
   
         knightA.scale.setScalar(0.15);
-        knightA.rotateX(-90 * (Math.PI / 180));
-        knightA.rotateZ(180 * (Math.PI / 180));
-        knightA.position.set(-.5, 9, 6);
+        setObjectTransform(knightA, gamePieceStartingPositions["knightsA"][2], gamePieceStartingRotations["knightsA"][2]);
     
         titleScene.add(knightA);
-        titleSceneElements["knightsA"].push(knightA);
+        gamePieceObjects["knightsA"].push(knightA);
       });
     });
 
@@ -351,12 +425,10 @@ function main() {
         });
   
         knightB.scale.setScalar(0.15);
-        knightB.rotateX(-90 * (Math.PI / 180));
-        knightB.rotateZ(180 * (Math.PI / 180));
-        knightB.position.set(4.5, -1, 16);
+        setObjectTransform(knightB, gamePieceStartingPositions["knightsB"][0], gamePieceStartingRotations["knightsB"][0]);
     
         titleScene.add(knightB);
-        titleSceneElements["knightsB"].push(knightB);
+        gamePieceObjects["knightsB"].push(knightB);
       });
     });
 
@@ -370,12 +442,10 @@ function main() {
         });
   
         knightB.scale.setScalar(0.15);
-        knightB.rotateX(-90 * (Math.PI / 180));
-        knightB.rotateZ(180 * (Math.PI / 180));
-        knightB.position.set(5.5, -1, 17);
+        setObjectTransform(knightB, gamePieceStartingPositions["knightsB"][1], gamePieceStartingRotations["knightsB"][1]);
     
         titleScene.add(knightB);
-        titleSceneElements["knightsB"].push(knightB);
+        gamePieceObjects["knightsB"].push(knightB);
       });
     });
 
@@ -389,12 +459,10 @@ function main() {
         });
   
         knightB.scale.setScalar(0.15);
-        knightB.rotateX(-90 * (Math.PI / 180));
-        knightB.rotateZ(180 * (Math.PI / 180));
-        knightB.position.set(3.5, -1, 17);
+        setObjectTransform(knightB, gamePieceStartingPositions["knightsB"][2], gamePieceStartingRotations["knightsB"][2]);
     
         titleScene.add(knightB);
-        titleSceneElements["knightsB"].push(knightB);
+        gamePieceObjects["knightsB"].push(knightB);
       });
     });
 
@@ -409,12 +477,10 @@ function main() {
         });
   
         bishopA.scale.setScalar(0.15);
-        bishopA.rotateX(-90 * (Math.PI / 180));
-        bishopA.rotateZ(180 * (Math.PI / 180));
-        bishopA.position.set(-3, 9, 7);
+        setObjectTransform(bishopA, gamePieceStartingPositions["bishopsA"][0], gamePieceStartingRotations["bishopsA"][0]);
     
         titleScene.add(bishopA);
-        titleSceneElements["bishopsA"].push(bishopA);
+        gamePieceObjects["bishopsA"].push(bishopA);
       });
     });
 
@@ -428,12 +494,10 @@ function main() {
         });
   
         bishopA.scale.setScalar(0.15);
-        bishopA.rotateX(-90 * (Math.PI / 180));
-        bishopA.rotateZ(180 * (Math.PI / 180));
-        bishopA.position.set(-2, 9, 6);
+        setObjectTransform(bishopA, gamePieceStartingPositions["bishopsA"][1], gamePieceStartingRotations["bishopsA"][1]);
     
         titleScene.add(bishopA);
-        titleSceneElements["bishopsA"].push(bishopA);
+        gamePieceObjects["bishopsA"].push(bishopA);
       });
     });
 
@@ -447,12 +511,10 @@ function main() {
         });
   
         bishopA.scale.setScalar(0.15);
-        bishopA.rotateX(-90 * (Math.PI / 180));
-        bishopA.rotateZ(180 * (Math.PI / 180));
-        bishopA.position.set(-4, 9, 6);
+        setObjectTransform(bishopA, gamePieceStartingPositions["bishopsA"][2], gamePieceStartingRotations["bishopsA"][2]);
     
         titleScene.add(bishopA);
-        titleSceneElements["bishopsA"].push(bishopA);
+        gamePieceObjects["bishopsA"].push(bishopA);
       });
     });
 
@@ -467,12 +529,10 @@ function main() {
         });
   
         bishopB.scale.setScalar(0.15);
-        bishopB.rotateX(-90 * (Math.PI / 180));
-        bishopB.rotateZ(180 * (Math.PI / 180));
-        bishopB.position.set(-1, -1, 16);
+        setObjectTransform(bishopB, gamePieceStartingPositions["bishopsB"][0], gamePieceStartingRotations["bishopsB"][0]);
     
         titleScene.add(bishopB);
-        titleSceneElements["bishopsB"].push(bishopB);
+        gamePieceObjects["bishopsB"].push(bishopB);
       });
     });
 
@@ -486,12 +546,10 @@ function main() {
         });
   
         bishopB.scale.setScalar(0.15);
-        bishopB.rotateX(-90 * (Math.PI / 180));
-        bishopB.rotateZ(180 * (Math.PI / 180));
-        bishopB.position.set(0, -1, 17);
+        setObjectTransform(bishopB, gamePieceStartingPositions["bishopsB"][1], gamePieceStartingRotations["bishopsB"][1]);
     
         titleScene.add(bishopB);
-        titleSceneElements["bishopsB"].push(bishopB);
+        gamePieceObjects["bishopsB"].push(bishopB);
       });
     });
 
@@ -505,14 +563,20 @@ function main() {
         });
   
         bishopB.scale.setScalar(0.15);
-        bishopB.rotateX(-90 * (Math.PI / 180));
-        bishopB.rotateZ(180 * (Math.PI / 180));
-        bishopB.position.set(-2, -1, 17);
+        setObjectTransform(bishopB, gamePieceStartingPositions["bishopsB"][2], gamePieceStartingRotations["bishopsB"][2]);
     
         titleScene.add(bishopB);
-        titleSceneElements["bishopsB"].push(bishopB);
+        gamePieceObjects["bishopsB"].push(bishopB);
       });
     });
+  }
+
+  function setPiecesToStartingPosition() {
+    // set white pieces
+    setObjectTransform(gamePieceObjects["kingA"], gamePieceStartingPositions["kingA"], gamePieceStartingRotations["kingA"]);
+
+    // Set black pieces
+    setObjectTransform(gamePieceObjects["kingB"], gamePieceStartingPositions["kingB"], gamePieceStartingRotations["kingB"]);
   }
 
   function initializeCanvasText() {
@@ -524,40 +588,170 @@ function main() {
       fontTexture: '../lib/assets/Roboto-msdf.png',
     });
      
-    //
-     
     const titleText = new ThreeMeshUI.Text({
       content: "King's Gambit\n",
       fontSize: 0.008
     });
 
     const titleInstructionText = new ThreeMeshUI.Text({
-      content: "Press Space to Start",
+      content: "Press Enter to Start",
       fontSize: 0.0045
     });
      
     titleContainer.add( titleText, titleInstructionText );
+    setUICanvasToCameraPosition(titleContainer, 0.01);
 
-    // Calculate the position in front of the camera
-    const cameraDirection = new THREE.Vector3();
-    camera.getWorldDirection(cameraDirection);
+    hintContainer = new ThreeMeshUI.Block({
+      width: 0.2,
+      height: 0.1,
+      padding: 0.0005,
+      fontFamily: '../lib/assets/Roboto-msdf.json',
+      fontTexture: '../lib/assets/Roboto-msdf.png',
+    });
 
-    const cameraPosition = camera.position.clone();
-    const targetPosition = cameraPosition.add(cameraDirection.multiplyScalar(near*1.5));
+    const hintTitleText = new ThreeMeshUI.Text({
+      content: "Tutorial\n",
+      fontSize: 0.008
+    });
 
-    // Calculate the upward offset
-    const upOffset = new THREE.Vector3();
-    camera.getWorldDirection(cameraDirection);
-    camera.getWorldDirection(upOffset);
-    upOffset.set(camera.up.x, camera.up.y, camera.up.z);
-    targetPosition.add(upOffset.multiplyScalar(0.01));
+    const hintText = new ThreeMeshUI.Text({
+      content: "You have amassed your army and are storming the castle of the rival white clan!\n",
+      fontSize: 0.005
+    });
 
-    titleContainer.position.copy(targetPosition);
+    const hintSelectArmyText = new ThreeMeshUI.Text({
+      content: "Select which troops you wish to send to battle in the next screen.\n",
+      fontSize: 0.005
+    });
 
-    // Make the container face the camera
-    titleContainer.lookAt(camera.position);
+    const hintCorrectTroopsText = new ThreeMeshUI.Text({
+      content: "Troop types have strength and weaknesses over other types. Choose wisely.\n",
+      fontSize: 0.005
+    });
+
+    const hintWeaknessesText = new ThreeMeshUI.Text({
+      content: "Pawns beat bishops, bishops beat knights, knights beat bishops.\n",
+      fontSize: 0.005
+    });
+
+    const hintNextText = new ThreeMeshUI.Text({
+      content: "Press enter to select your troops.\n",
+      fontSize: 0.005
+    });
+
+    hintContainer.add( hintTitleText, hintText, hintSelectArmyText, hintCorrectTroopsText, hintWeaknessesText, hintNextText );
+    setUICanvasToCameraPosition(hintContainer, 0);
+
+    selectControlsContainer = new ThreeMeshUI.Block({
+      width: 0.1,
+      height: 0.03,
+      padding: 0.003,
+      interLine: 0.003,
+      fontFamily: '../lib/assets/Roboto-msdf.json',
+      fontTexture: '../lib/assets/Roboto-msdf.png',
+    });
+
+    const selectPawnText = new ThreeMeshUI.Text({
+      content: "Press A to send pawns (small pieces)\n",
+      fontSize: 0.005
+    });
+
+    const selectBishopText = new ThreeMeshUI.Text({
+      content: "Press W to send bishops (tall pieces)\n",
+      fontSize: 0.005
+    });
+
+    const selectKnightText = new ThreeMeshUI.Text({
+      content: "Press D to send knights (horse pieces)\n",
+      fontSize: 0.005
+    });
+
+    selectControlsContainer.add( selectPawnText, selectBishopText, selectKnightText );
+    setUICanvasToCameraPosition(selectControlsContainer, -0.04);
+
+    const loader = new THREE.TextureLoader();
+    var texture = loader.load( '../img/type_chart.png' );
+
+    var geometry = new THREE.PlaneGeometry();
+    var material = new THREE.MeshBasicMaterial( { map: texture ,opacity: 1, transparent: true } );
+
+    typeChartCanvas = new THREE.Mesh( geometry, material );
+    typeChartCanvas.scale.setScalar(0.06);
+    scene.add( typeChartCanvas );
+    setUICanvasToCameraPosition(typeChartCanvas, 0.02);
+
+    playerWinsContainer = new ThreeMeshUI.Block({
+      width: 0.1,
+      height: 0.02,
+      padding: 0.001,
+      interLine: 0.001,
+      fontFamily: '../lib/assets/Roboto-msdf.json',
+      fontTexture: '../lib/assets/Roboto-msdf.png',
+    });
+     
+    const playerWinsHeaderText = new ThreeMeshUI.Text({
+      content: "Your wins:\n",
+      fontSize: 0.008
+    });
+
+    playerWinsText = new ThreeMeshUI.Text({
+      content: "0",
+      fontSize: 0.005
+    });
+     
+    playerWinsContainer.add( playerWinsHeaderText, playerWinsText );
+
+    enemyWinsContainer = new ThreeMeshUI.Block({
+      width: 0.1,
+      height: 0.02,
+      padding: 0.001,
+      interLine: 0.001,
+      fontFamily: '../lib/assets/Roboto-msdf.json',
+      fontTexture: '../lib/assets/Roboto-msdf.png',
+    });
+     
+    const enemyWinsHeaderText = new ThreeMeshUI.Text({
+      content: "Enemy wins:\n",
+      fontSize: 0.008
+    });
+
+    enemyWinsText = new ThreeMeshUI.Text({
+      content: "0",
+      fontSize: 0.005
+    });
+     
+    enemyWinsContainer.add( enemyWinsHeaderText, enemyWinsText );
+
+    retryContainer = new ThreeMeshUI.Block({
+      width: 0.1,
+      height: 0.01,
+      padding: 0.001,
+      interLine: 0.003,
+      fontFamily: '../lib/assets/Roboto-msdf.json',
+      fontTexture: '../lib/assets/Roboto-msdf.png',
+    });
+
+    const retryText = new ThreeMeshUI.Text({
+      content: "Press Enter to retry battle\n",
+      fontSize: 0.005
+    });
+
+    retryContainer.add( retryText );
 
     scene.add(titleContainer);
+    scene.add(hintContainer);
+    scene.add(selectControlsContainer);
+    scene.add(playerWinsContainer);
+    scene.add(enemyWinsContainer);
+    scene.add(retryContainer);
+
+    // Hide unecessary ui
+    hintContainer.visible = false;
+    selectControlsContainer.visible = false;
+    typeChartCanvas.visible = false;
+    playerWinsContainer.visible = false;
+    enemyWinsContainer.visible = false;
+    retryContainer.visible = false;
   }
 
   initializeTitleScreen();
@@ -787,14 +981,129 @@ function main() {
     // 65 is A, 87 is W, 68 is D
     if (ev.keyCode == 13) { // Enter key
       if (inTitleScreen) {
-        console.log("Start game");
         titleContainer.visible = false;
+        hintContainer.visible = true;
+
         inTitleScreen = false;
         inHintScreen = true;
+      }
+
+      else if (inHintScreen) {
+        hintContainer.visible = false;
+        selectControlsContainer.visible = true;
+        typeChartCanvas.visible = true;
+
+        inHintScreen = false;
+        inSelectingScreen = true;
+      }
+
+      else if (inResultsScreen) {
+        setObjectTransform(camera, startingCameraPos, startingCameraRot);
+
+        playerWinsContainer.visible = false;
+        enemyWinsContainer.visible = false;
+        retryContainer.visible = false;
+        selectControlsContainer.visible = true;
+        typeChartCanvas.visible = true;
+
+        inResultsScreen = false;
+        inSelectingScreen = true;
+      }
+    }
+
+    else if (ev.keyCode == 65) { // A key
+      if (inSelectingScreen) {
+        selectControlsContainer.visible = false;
+        typeChartCanvas.visible = false;
+
+        // Properly assign AI Management variables
+        playerSelectedTroop = 0;
+        enemySelectedTroop = getRandomInt(0, 2);
+
+        inSelectingScreen = false;
+        inBattleScreen = true;
+
+        showBattle();
+      }
+    }
+
+    else if (ev.keyCode == 87) { // W key
+      if (inSelectingScreen) {
+        selectControlsContainer.visible = false;
+        typeChartCanvas.visible = false;
+
+        // Properly assign AI Management variables
+        playerSelectedTroop = 1;
+        enemySelectedTroop = getRandomInt(0, 2);
+
+        inSelectingScreen = false;
+        inBattleScreen = true;
+
+        showBattle();
+      }
+    }
+
+    else if (ev.keyCode == 68) { // D key
+      if (inSelectingScreen) {
+        selectControlsContainer.visible = false;
+        typeChartCanvas.visible = false;
+
+        // Properly assign AI Management variables
+        playerSelectedTroop = 2;
+        enemySelectedTroop = getRandomInt(0, 2);
+
+        inSelectingScreen = false;
+        inBattleScreen = true;
+
+        showBattle();
       }
     }
 
     requestAnimationFrame(render);
+  }
+
+  function showBattle() {
+
+    inBattleScreen = false;
+    inResultsScreen = true;
+    showResults();
+  }
+
+  function showResults() {
+    setObjectTransform(camera, resultsCameraPos, resultsCameraRot);
+
+    switch (getBattleResult()) {
+      case 0:
+        playerWins += 1;
+        break;
+      case 1:
+        enemyWins += 1;
+        break;
+      case 2:
+        break;
+    }
+
+    playerWinsContainer.visible = true;
+    playerWinsText.set( {content: playerWins.toString() } );
+    setUICanvasToCameraPosition(playerWinsContainer, 0.035);
+    playerWinsContainer.position.x -= 0.055;
+
+    enemyWinsContainer.visible = true;
+    enemyWinsText.set( {content: enemyWins.toString() } );
+    setUICanvasToCameraPosition(enemyWinsContainer, 0.035);
+    enemyWinsContainer.position.x += 0.055;
+
+    retryContainer.visible = true;
+    setUICanvasToCameraPosition(retryContainer, -0.05);
+
+    if (getBattleResult() == 0) {
+      //setObjectTransform(gamePieceObjects["kingB"], resultsKingPosWin, resultsKingRotWin);
+    }
+    else {
+      //setObjectTransform(gamePieceObjects["kingB"], resultsKingPosLoss, resultsKingRotLoss);
+    }
+    //console.log("Player's result: ", playerSelectedTroop);
+    //console.log("Enemy's result: ", enemySelectedTroop);
   }
 
 	requestAnimationFrame(render);
