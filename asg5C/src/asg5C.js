@@ -112,6 +112,10 @@ var gamePieceWhiteBattleRotations = [[-90, 0, 90], [-90, 0, 90], [-90, 0, 90]];
 var gamePieceBlackBattlePositions = [[1, -1, -7], [.4, -1, -8], [.4, -1, -6]];
 var gamePieceBlackBattleRotations = [[-90, 0, 90], [-90, 0, 90], [-90, 0, 90]];
 
+// Rain VFX
+var rain, rainGeo; 
+var rainCount = 20000;
+
 function createCamera() {
   return new THREE.PerspectiveCamera(fov, aspect, near, far);
 }
@@ -273,6 +277,36 @@ function main() {
   // Create scene
   const titleScene = new THREE.Scene();
   scene = titleScene;
+
+  scene.fog = new THREE.FogExp2(0x11111f, 0.02);
+  renderer.setClearColor(scene.fog.color);
+
+  // Create Rain VFX
+  // Referenced from:
+  // https://www.youtube.com/watch?v=IRGus_5OuUY
+  let positions = [];
+  let sizes = [];
+  rainGeo = new THREE.BufferGeometry();
+  for (let i=0; i<rainCount; i++) {
+    let raindrop = new THREE.Vector3(
+      Math.random() * 400 - 200,
+      Math.random() * 500 - 250,
+      Math.random() * 400 - 200
+    );
+    positions.push(Math.random() * 400 - 200);
+    positions.push(Math.random() * 500 - 250);
+    positions.push(Math.random() * 400 - 200);
+    sizes.push(30);
+  }
+  rainGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(positions), 3));
+  rainGeo.setAttribute('size', new THREE.BufferAttribute(new Float32Array(sizes), 1));
+  var rainMaterial = new THREE.PointsMaterial({
+    color: 0xaaaaaa,
+    size: 0.15,
+    transparent: true
+  });
+  rain = new THREE.Points(rainGeo, rainMaterial);
+  scene.add(rain);
 
   function initializeTitleScreen() {
     // Load king models
@@ -648,6 +682,7 @@ function main() {
       width: 0.1,
       height: 0.03,
       padding: 0.005,
+      interLine: 0.0025,
       fontFamily: '../lib/assets/Roboto-msdf.json',
       fontTexture: '../lib/assets/Roboto-msdf.png',
     });
@@ -1089,6 +1124,8 @@ function main() {
       playThunderClapSFX();
     }
 
+    animateRainyScene();
+
     ThreeMeshUI.update();
 		renderer.render(scene, camera);
 
@@ -1201,6 +1238,19 @@ function main() {
     requestAnimationFrame(render);
   }
 
+  function animateRainyScene() {
+    rainGeo.attributes.size.array.forEach((r, i) => {
+      r += 0.3;
+    });
+
+    rainGeo.verticesNeedUpdate = true;
+
+    rain.position.y -= 0.555;
+    if (rain.position.y < -200) {
+      rain.position.y = 0;
+    }
+  }
+
   function startTimer(time) {
     timerTarget = time;
     timer.reset();
@@ -1288,7 +1338,7 @@ function main() {
       waitingToUnleashTroops = false;
       waitingToShowResults = true;
 
-      startTimer(0.8);
+      startTimer(0.5);
     }
 
     else if (waitingToShowResults) {
